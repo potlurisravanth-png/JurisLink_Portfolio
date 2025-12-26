@@ -49,3 +49,9 @@ class CaseState(TypedDict, total=False):
     # ROUTING CONTROL
     # ---------------------------------------------------------
     next_step: Optional[str]  # Which agent to call next ("researcher", "strategist", "writer", "end")
+    
+    # ---------------------------------------------------------
+    # LANGUAGE SETTINGS (Phase 6)
+    # ---------------------------------------------------------
+    language: Optional[str]  # User's preferred language: "en", "es", "fr", "zh", "hi"
+

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { sendMessage } from './api';
-import { Send, Plus, MessageSquare, ChevronDown, ChevronRight, FileText, Download, Loader2, User, Bot, Moon, Sun, Zap } from 'lucide-react';
+import { Send, Plus, MessageSquare, ChevronDown, ChevronRight, Download, Loader2, User, Bot, Moon, Sun, Zap, Globe, Trash2, Save, FileDown } from 'lucide-react';
 
 // ============ THEME CONFIGURATION ============
 const themes = {
@@ -57,15 +57,58 @@ const themes = {
   }
 };
 
+// ============ LANGUAGE CONFIGURATION ============
+const languages = {
+  en: { name: 'English', flag: '🇺🇸' },
+  es: { name: 'Español', flag: '🇪🇸' },
+  fr: { name: 'Français', flag: '🇫🇷' },
+  zh: { name: '中文', flag: '🇨🇳' },
+  hi: { name: 'हिन्दी', flag: '🇮🇳' }
+};
+
+// ============ STATUS BADGES ============
+const getStatusBadge = (caseData) => {
+  if (caseData.docUrl) return { label: 'Complete', color: 'bg-green-500' };
+  if (caseData.strategy) return { label: 'Strategy', color: 'bg-purple-500' };
+  if (Object.keys(caseData.facts || {}).length > 0) return { label: 'Research', color: 'bg-blue-500' };
+  if (caseData.messages?.length > 1) return { label: 'Interview', color: 'bg-yellow-500' };
+  return { label: 'New', color: 'bg-zinc-500' };
+};
+
+// ============ LOCAL STORAGE KEYS ============
+const STORAGE_KEYS = {
+  CASES: 'jurislink_cases',
+  THEME: 'jurislink_theme',
+  LANGUAGE: 'jurislink_language'
+};
+
 function App() {
-  // Theme State
-  const [theme, setTheme] = useState('dark');
+  // Theme State (with persistence)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.THEME) || 'dark';
+  });
   const t = themes[theme];
 
-  // Case History State
-  const [cases, setCases] = useState([
-    { id: 1, title: 'Current Case', messages: [{ role: 'assistant', content: 'Hello! I\'m your JurisLink legal assistant. Tell me about your situation and I\'ll help you understand your legal options.' }], facts: {}, strategy: null, docUrl: null }
-  ]);
+  // Language State (with persistence)
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en';
+  });
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+
+  // Case History State (with persistence)
+  const [cases, setCases] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.CASES);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to load cases:', e);
+      }
+    }
+    return [
+      { id: 1, title: 'Current Case', messages: [{ role: 'assistant', content: 'Hello! I\'m your JurisLink legal assistant. Tell me about your situation and I\'ll help you understand your legal options.' }], facts: {}, strategy: null, docUrl: null }
+    ];
+  });
   const [activeCaseId, setActiveCaseId] = useState(1);
 
   const [input, setInput] = useState('');
@@ -79,22 +122,75 @@ function App() {
   // Get active case
   const activeCase = cases.find(c => c.id === activeCaseId) || cases[0];
 
+  // ============ PERSISTENCE EFFECTS ============
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, language);
+  }, [language]);
+
+  useEffect(() => {
+    // Save cases (excluding blob URLs which can't be serialized)
+    const casesToSave = cases.map(c => ({
+      ...c,
+      docUrl: null // Can't persist blob URLs
+    }));
+    localStorage.setItem(STORAGE_KEYS.CASES, JSON.stringify(casesToSave));
+  }, [cases]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeCase?.messages]);
 
+  // ============ CASE MANAGEMENT ============
   const createNewCase = () => {
     const newId = Math.max(...cases.map(c => c.id)) + 1;
+    const greetings = {
+      en: 'Hello! I\'m your JurisLink legal assistant. Tell me about your situation and I\'ll help you understand your legal options.',
+      es: '¡Hola! Soy tu asistente legal de JurisLink. Cuéntame sobre tu situación y te ayudaré a entender tus opciones legales.',
+      fr: 'Bonjour! Je suis votre assistant juridique JurisLink. Parlez-moi de votre situation et je vous aiderai à comprendre vos options légales.',
+      zh: '您好！我是您的JurisLink法律助手。请告诉我您的情况，我将帮助您了解您的法律选择。',
+      hi: 'नमस्ते! मैं आपका JurisLink कानूनी सहायक हूं। मुझे अपनी स्थिति के बारे में बताएं और मैं आपके कानूनी विकल्पों को समझने में आपकी मदद करूंगा।'
+    };
     const newCase = {
       id: newId,
       title: `Case #${newId}`,
-      messages: [{ role: 'assistant', content: 'Hello! I\'m your JurisLink legal assistant. Tell me about your situation and I\'ll help you understand your legal options.' }],
+      messages: [{ role: 'assistant', content: greetings[language] || greetings.en }],
       facts: {},
       strategy: null,
       docUrl: null
     };
     setCases([...cases, newCase]);
     setActiveCaseId(newId);
+  };
+
+  const deleteCase = (caseId) => {
+    if (cases.length <= 1) {
+      alert('Cannot delete the last case');
+      return;
+    }
+    const newCases = cases.filter(c => c.id !== caseId);
+    setCases(newCases);
+    if (activeCaseId === caseId) {
+      setActiveCaseId(newCases[0].id);
+    }
+  };
+
+  const exportCase = (caseData) => {
+    const exportData = {
+      ...caseData,
+      exportedAt: new Date().toISOString(),
+      docUrl: null
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${caseData.title.replace(/\s+/g, '_')}_export.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleSend = async () => {
@@ -113,7 +209,7 @@ function App() {
     setLoading(true);
 
     try {
-      const data = await sendMessage(input, activeCase.messages);
+      const data = await sendMessage(input, activeCase.messages, language);
 
       const botMsg = { role: 'assistant', content: data.response };
 
@@ -174,6 +270,35 @@ function App() {
           </div>
         </div>
 
+        {/* Language Selector */}
+        <div className={`p-3 border-b ${t.border}`}>
+          <div className="relative">
+            <button
+              onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+              className={`w-full flex items-center justify-between px-3 py-2 ${t.card} ${t.cardHover} rounded-lg text-sm transition-all border ${t.border}`}
+            >
+              <span className="flex items-center gap-2">
+                <Globe size={16} />
+                <span>{languages[language].flag} {languages[language].name}</span>
+              </span>
+              <ChevronDown size={14} className={showLanguageMenu ? 'rotate-180' : ''} />
+            </button>
+            {showLanguageMenu && (
+              <div className={`absolute top-full left-0 right-0 mt-1 ${t.card} border ${t.border} rounded-lg shadow-lg z-50 overflow-hidden`}>
+                {Object.entries(languages).map(([code, lang]) => (
+                  <button
+                    key={code}
+                    onClick={() => { setLanguage(code); setShowLanguageMenu(false); }}
+                    className={`w-full px-3 py-2 text-left text-sm ${t.cardHover} transition-all ${language === code ? t.accentText : ''}`}
+                  >
+                    {lang.flag} {lang.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* New Case Button */}
         <div className="p-3">
           <button
@@ -188,19 +313,36 @@ function App() {
         <div className="flex-1 overflow-y-auto px-3">
           <p className={`text-xs font-semibold ${t.textDimmed} uppercase tracking-wider mb-2 px-2`}>Case History</p>
           <div className="space-y-1">
-            {cases.map(c => (
-              <button
-                key={c.id}
-                onClick={() => setActiveCaseId(c.id)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all text-left ${c.id === activeCaseId
-                  ? `${t.card} ${t.text} border ${t.border}`
-                  : `${t.textMuted} ${t.cardHover}`
-                  }`}
-              >
-                <MessageSquare size={16} />
-                <span className="truncate flex-1">{c.title}</span>
-              </button>
-            ))}
+            {cases.map(c => {
+              const status = getStatusBadge(c);
+              return (
+                <div
+                  key={c.id}
+                  className={`group flex items-center gap-2 px-3 py-3 rounded-xl text-sm transition-all ${c.id === activeCaseId
+                    ? `${t.card} ${t.text} border ${t.border}`
+                    : `${t.textMuted} ${t.cardHover}`
+                    }`}
+                >
+                  <button
+                    onClick={() => setActiveCaseId(c.id)}
+                    className="flex-1 flex items-center gap-3 text-left"
+                  >
+                    <MessageSquare size={16} />
+                    <span className="truncate flex-1">{c.title}</span>
+                    <span className={`px-1.5 py-0.5 text-[10px] rounded ${status.color} text-white`}>
+                      {status.label}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => deleteCase(c.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 transition-all"
+                    title="Delete case"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -215,8 +357,8 @@ function App() {
                   onClick={() => setTheme(key)}
                   title={themeConfig.name}
                   className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-all ${theme === key
-                      ? `${t.bg} ${t.accentText} shadow-sm`
-                      : `${t.textMuted} hover:${t.text}`
+                    ? `${t.bg} ${t.accentText} shadow-sm`
+                    : `${t.textMuted} hover:${t.text}`
                     }`}
                 >
                   <IconComponent size={16} />
@@ -242,14 +384,28 @@ function App() {
 
         {/* Header */}
         <div className={`h-14 border-b ${t.border} flex items-center justify-between px-6 ${t.bgSecondary}/80 backdrop-blur-sm relative z-10 transition-colors duration-300`}>
-          <h2 className="font-medium">{activeCase.title}</h2>
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${t.textMuted} hover:${t.text} ${t.cardHover} transition-all`}
-          >
-            Case Details
-            {showDetails ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button>
+          <div className="flex items-center gap-3">
+            <h2 className="font-medium">{activeCase.title}</h2>
+            <span className={`px-2 py-0.5 text-xs rounded ${getStatusBadge(activeCase).color} text-white`}>
+              {getStatusBadge(activeCase).label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportCase(activeCase)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${t.textMuted} hover:${t.text} ${t.cardHover} transition-all`}
+              title="Export case as JSON"
+            >
+              <FileDown size={16} />
+            </button>
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${t.textMuted} hover:${t.text} ${t.cardHover} transition-all`}
+            >
+              Case Details
+              {showDetails ? <ChevronDown size={16} /> : <ChevronDown size={16} className="rotate-[-90deg]" />}
+            </button>
+          </div>
         </div>
 
         {/* Collapsible Details Panel */}
@@ -289,13 +445,23 @@ function App() {
               {activeCase.docUrl && (
                 <div className={`flex-1 min-w-[200px] bg-gradient-to-br ${t.gradient}/20 rounded-xl p-4 border ${t.border}`}>
                   <h4 className={`text-xs font-semibold ${t.accentText} uppercase tracking-wider mb-3`}>Document Ready</h4>
-                  <a
-                    href={activeCase.docUrl}
-                    download="Demand_Letter.pdf"
-                    className={`flex items-center justify-center gap-2 w-full ${t.accentBg} ${t.accentHover} text-white py-2 rounded-lg font-medium text-sm transition-all`}
-                  >
-                    <Download size={16} /> Download PDF
-                  </a>
+                  <div className="space-y-2">
+                    <a
+                      href={activeCase.docUrl}
+                      download="Demand_Letter.pdf"
+                      className={`flex items-center justify-center gap-2 w-full ${t.accentBg} ${t.accentHover} text-white py-2 rounded-lg font-medium text-sm transition-all`}
+                    >
+                      <Download size={16} /> Download PDF
+                    </a>
+                    <a
+                      href="https://opensign.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex items-center justify-center gap-2 w-full border ${t.border} ${t.textMuted} hover:${t.text} py-2 rounded-lg text-sm transition-all`}
+                    >
+                      ✍️ Request E-Signature
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
@@ -352,7 +518,7 @@ function App() {
               <input
                 type="text"
                 className={`w-full bg-transparent px-4 py-4 pr-14 text-[15px] focus:outline-none ${t.text} placeholder:${t.textDimmed}`}
-                placeholder="Describe your legal situation..."
+                placeholder={language === 'es' ? 'Describe tu situación legal...' : language === 'fr' ? 'Décrivez votre situation juridique...' : language === 'zh' ? '描述您的法律情况...' : language === 'hi' ? 'अपनी कानूनी स्थिति का वर्णन करें...' : 'Describe your legal situation...'}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
