@@ -54,4 +54,10 @@ class CaseState(TypedDict, total=False):
     # LANGUAGE SETTINGS (Phase 6)
     # ---------------------------------------------------------
     language: Optional[str]  # User's preferred language: "en", "es", "fr", "zh", "hi"
+    
+    # ---------------------------------------------------------
+    # CRITIC AGENT OUTPUT (Phase 7)
+    # ---------------------------------------------------------
+    critic_feedback: Optional[str]  # Counter-analysis from adversarial critic
+
 
