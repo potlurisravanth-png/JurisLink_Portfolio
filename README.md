@@ -12,6 +12,14 @@ JurisLink is a multi-agent legal AI system that helps clients navigate wrongful 
 
 ---
 
+## 🚀 Try It Live!
+
+> **[🔗 Launch JurisLink Demo](https://ambitious-sand-078aabe0f.4.azurestaticapps.net)**
+> 
+> *Experience the AI legal assistant in action. Describe a workplace issue and watch the multi-agent system analyze your case.*
+
+---
+
 ## 🌟 Features
 
 ### Multi-Agent Architecture
