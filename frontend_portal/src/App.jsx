@@ -8,29 +8,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // --- SUB-COMPONENT: STREAMING MESSAGE ---
 const StreamedMessage = ({ content, isFinal }) => {
-  const [display, setDisplay] = useState(isFinal ? content : "");
+  // Safeguard: ensure content is always a pure string
+  const safeContent = typeof content === 'string' ? content : String(content || '');
+  const [display, setDisplay] = useState(isFinal ? safeContent : '');
 
   useEffect(() => {
     if (isFinal) {
-      setDisplay(content);
+      setDisplay(safeContent);
       return;
     }
     let i = 0;
     const interval = setInterval(() => {
-      setDisplay(content.slice(0, i));
+      setDisplay(safeContent.slice(0, i));
       i += 5;
-      if (i > content.length) clearInterval(interval);
+      if (i > safeContent.length) clearInterval(interval);
     }, 10);
     return () => clearInterval(interval);
-  }, [content, isFinal]);
+  }, [safeContent, isFinal]);
+
+  // Don't render if nothing to show
+  if (!display) {
+    return <span className="text-slate-400">Loading...</span>;
+  }
 
   return (
-    <ReactMarkdown
-      className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 max-w-none"
-      remarkPlugins={[remarkGfm]}
-    >
-      {display}
-    </ReactMarkdown>
+    <div className="prose prose-invert prose-p:leading-relaxed max-w-none whitespace-pre-wrap text-slate-200">
+      {display || ""}
+    </div>
   );
 };
 
