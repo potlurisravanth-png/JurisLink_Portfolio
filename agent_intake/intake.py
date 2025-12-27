@@ -30,25 +30,44 @@ def detect_completion_signal(messages) -> bool:
         return False
     
     last_user_msg = None
+    msg_count = 0
     for msg in reversed(messages):
         if hasattr(msg, 'type') and msg.type == 'human':
             last_user_msg = msg.content.lower()
+            msg_count += 1
             break
         elif hasattr(msg, 'content') and isinstance(msg, dict) and msg.get('role') == 'user':
             last_user_msg = msg['content'].lower()
+            msg_count += 1
             break
     
     if not last_user_msg:
         return False
     
-    completion_signals = [
-        'complete', 'done', 'that\'s all', 'that\'s everything', 
-        'that is all', 'that is everything', 'nothing else',
-        'no more', 'i\'m done', 'i am done', 'finish',
-        'that covers everything', 'have all the information'
+    # Strong completion signals (explicit)
+    strong_signals = [
+        "i'm done", "i am done", "that's everything", "that is everything",
+        "that's all", "that is all", "nothing else", "no more information",
+        "finished", "complete", "that covers it", "that covers everything"
     ]
     
-    return any(signal in last_user_msg for signal in completion_signals)
+    # Check for strong signals first
+    if any(signal in last_user_msg for signal in strong_signals):
+        print(f"--- STRONG completion signal detected ---")
+        return True
+    
+    # Moderate signals (may need context)
+    moderate_signals = ['done', 'finish', 'all the facts', 'everything i know', 'all i have']
+    has_moderate = any(signal in last_user_msg for signal in moderate_signals)
+    
+    # Count user messages in conversation (heuristic: after 3+ exchanges, moderate signals trigger)
+    user_msg_count = sum(1 for m in messages if hasattr(m, 'type') and m.type == 'human')
+    
+    if has_moderate and user_msg_count >= 3:
+        print(f"--- MODERATE completion signal + sufficient context ({user_msg_count} msgs) ---")
+        return True
+    
+    return False
 
 def intake_node(state: CaseState) -> dict:
     print("--- [01] INTAKE AGENT ACTIVE ---")
