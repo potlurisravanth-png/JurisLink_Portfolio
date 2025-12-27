@@ -183,7 +183,7 @@ function App() {
             >
               <Menu size={20} />
             </button>
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/20">JL</div>
+            <img src="/logo.png" alt="JurisLink Logo" className="w-8 h-8 rounded-lg shadow-lg shadow-blue-900/20" />
             <h1 className="font-semibold text-lg tracking-tight text-slate-200">JURISLINK <span className="text-slate-500 text-xs font-mono ml-2">v2.1</span></h1>
           </div>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
