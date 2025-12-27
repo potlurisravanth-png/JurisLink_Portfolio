@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TextareaAutosize from 'react-textarea-autosize';
 import { sendMessage } from './api';
-import { Send, FileText, Download, Briefcase, StopCircle, Bot, X, Menu, AlertTriangle } from 'lucide-react';
+import { Send, FileText, Download, Briefcase, StopCircle, Bot, X, Menu, AlertTriangle, Settings, Trash2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- SUB-COMPONENT: STREAMING MESSAGE ---
@@ -63,10 +63,86 @@ const ErrorCard = ({ error, errorSource }) => (
   </motion.div>
 );
 
+// --- SUB-COMPONENT: SETTINGS MODAL ---
+const SettingsModal = ({ isOpen, onClose, onClearHistory }) => {
+  if (!isOpen) return null;
 
-// --- SUB-COMPONENT: LEFT NAVIGATION (Gemini Style) ---
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="relative bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-slate-200">Settings</h2>
+          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded text-slate-400 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Theme Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Appearance</h3>
+            <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-800">
+              <span className="text-slate-300">Dark Mode</span>
+              <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer">
+                <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full shadow-sm" />
+              </div>
+            </div>
+          </div>
+
+          {/* Data Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Data & Privacy</h3>
+            <button
+              onClick={onClearHistory}
+              className="w-full flex items-center justify-between p-3 bg-slate-800/50 hover:bg-red-900/20 rounded-xl border border-slate-800 hover:border-red-900/50 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <Trash2 size={18} className="text-slate-400 group-hover:text-red-400" />
+                <span className="text-slate-300 group-hover:text-red-200">Clear Conversation History</span>
+              </div>
+            </button>
+          </div>
+
+          {/* About Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">About</h3>
+            <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 text-center">
+              <p className="text-slate-300 font-medium">JurisLink v2.1.0</p>
+              <p className="text-xs text-slate-500 mt-1">Prod-Ready Build • Powered by Legal Brain</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-slate-800 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors font-medium text-sm"
+          >
+            Done
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // --- SUB-COMPONENT: SIDEBAR CONTENT ---
-const SidebarContent = ({ onNewChat }) => {
+const SidebarContent = ({ onNewChat, onSettings, onHistoryClick }) => {
   const history = [
     { title: "Wrongful Termination - CA", date: "Today" },
     { title: "Wage Theft Inquiry", date: "Yesterday" },
@@ -92,7 +168,11 @@ const SidebarContent = ({ onNewChat }) => {
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-2">Recent</h3>
             <div className="space-y-1">
               {history.map((item, i) => (
-                <button key={i} className="w-full text-left p-2 rounded-lg hover:bg-slate-900 text-slate-400 hover:text-slate-200 text-sm truncate transition-colors flex items-center gap-3 group">
+                <button
+                  key={i}
+                  onClick={() => onHistoryClick(item.title)}
+                  className="w-full text-left p-2 rounded-lg hover:bg-slate-900 text-slate-400 hover:text-slate-200 text-sm truncate transition-colors flex items-center gap-3 group"
+                >
                   <Briefcase size={14} className="opacity-50 group-hover:opacity-100" />
                   <span className="truncate">{item.title}</span>
                 </button>
@@ -104,9 +184,12 @@ const SidebarContent = ({ onNewChat }) => {
 
       {/* Footer */}
       <div className="mt-auto p-4 border-t border-slate-900 w-72">
-        <button className="flex items-center gap-3 text-slate-500 hover:text-slate-300 text-sm p-2 rounded-lg hover:bg-slate-900 w-full transition-colors">
-          <div className="w-6 h-6 rounded bg-slate-800 flex items-center justify-center text-xs">?</div>
-          Help & Support
+        <button
+          onClick={onSettings}
+          className="flex items-center gap-3 text-slate-500 hover:text-slate-300 text-sm p-2 rounded-lg hover:bg-slate-900 w-full transition-colors"
+        >
+          <Settings size={18} />
+          Settings
         </button>
       </div>
     </div>
@@ -114,7 +197,7 @@ const SidebarContent = ({ onNewChat }) => {
 };
 
 // --- SUB-COMPONENT: LEFT NAVIGATION (Gemini Style) ---
-const LeftNav = ({ isOpen, setIsOpen, onNewChat }) => {
+const LeftNav = ({ isOpen, setIsOpen, onNewChat, onSettings, onHistoryClick }) => {
   return (
     <>
       {/* MOBILE: Slide-out Drawer */}
@@ -135,7 +218,7 @@ const LeftNav = ({ isOpen, setIsOpen, onNewChat }) => {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="md:hidden fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 shadow-2xl"
             >
-              <SidebarContent onNewChat={onNewChat} />
+              <SidebarContent onNewChat={onNewChat} onSettings={onSettings} onHistoryClick={onHistoryClick} />
             </motion.div>
           </>
         )}
@@ -143,7 +226,7 @@ const LeftNav = ({ isOpen, setIsOpen, onNewChat }) => {
 
       {/* DESKTOP: Static Sidebar */}
       <div className="hidden md:block w-72 h-full z-30 relative shrink-0">
-        <SidebarContent onNewChat={onNewChat} />
+        <SidebarContent onNewChat={onNewChat} onSettings={onSettings} onHistoryClick={onHistoryClick} />
       </div>
     </>
   );
@@ -212,6 +295,7 @@ function App() {
   // Navigation State
   const [isLeftNavOpen, setIsLeftNavOpen] = useState(false); // Mobile toggle
   const [isRightNavOpen, setIsRightNavOpen] = useState(false); // Context toggle
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Settings modal
 
   // Data State
   const [facts, setFacts] = useState({});
@@ -250,6 +334,20 @@ function App() {
   const handleNewChat = () => {
     if (window.confirm("Start a new chat? This will clear current progress.")) {
       window.location.reload();
+    }
+  };
+
+  const handleSettings = () => setIsSettingsOpen(true);
+
+  const handleHistoryClick = (title) => {
+    // In a real app, this would load the chat ID
+    alert(`Load chat: ${title}\n(Feature coming in next update!)`);
+  };
+
+  const handleClearHistory = () => {
+    if (window.confirm("Are you sure you want to clear all history?")) {
+      alert("History cleared!");
+      setIsSettingsOpen(false);
     }
   };
 
@@ -296,7 +394,24 @@ function App() {
     <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden selection:bg-blue-500/30">
 
       {/* 1. LEFT NAVIGATION */}
-      <LeftNav isOpen={isLeftNavOpen} setIsOpen={setIsLeftNavOpen} onNewChat={handleNewChat} />
+      <LeftNav
+        isOpen={isLeftNavOpen}
+        setIsOpen={setIsLeftNavOpen}
+        onNewChat={handleNewChat}
+        onSettings={handleSettings}
+        onHistoryClick={handleHistoryClick}
+      />
+
+      {/* SETTINGS MODAL */}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            onClearHistory={handleClearHistory}
+          />
+        )}
+      </AnimatePresence>
 
       {/* 2. MAIN CHAT AREA */}
       <div className="flex-1 flex flex-col relative w-full h-full bg-slate-900/20">
