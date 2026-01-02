@@ -37,6 +37,19 @@ EXCLUDE_PATTERNS = [
     ".ds_store"
 ]
 
+# === SENSITIVE FILES TO DELETE FROM PUBLIC MIRROR ===
+# These files are visible in the Private Repo (so the God Agent can read them)
+# but MUST be deleted before pushing to the Public Portfolio.
+SENSITIVE_FILES = [
+    "docs/instructions.md",      # God Agent instructions
+    "MEMORY",                    # Development journal/memory
+    "agent_strategist",          # Proprietary strategy logic
+    "agent_critic",              # Proprietary critic logic
+    "agent_researcher",          # Proprietary research logic
+    "agent_assistant",           # Proprietary assistant logic
+    "maintenance/cleanup.py",    # Internal maintenance scripts
+]
+
 def print_header(text):
     print(f"\n{'='*50}")
     print(f"  {text}")
@@ -103,6 +116,21 @@ This project demonstrates the **System Architecture**, **Frontend UX**, and **In
     placeholder_path.write_text(content, encoding="utf-8")
     print("   ✓ Created placeholder: backend_logic.md")
 
+def remove_sensitive_files(dest_root):
+    """🔒 KILL SWITCH: Delete sensitive files from public mirror before push."""
+    print("\n🔒 Removing sensitive files from public mirror...")
+    for item in SENSITIVE_FILES:
+        target = dest_root / item
+        if target.exists():
+            if target.is_dir():
+                shutil.rmtree(target)
+                print(f"   🗑️  Deleted folder: {item}")
+            else:
+                target.unlink()
+                print(f"   🗑️  Deleted file: {item}")
+        else:
+            print(f"   ⏭️  Already absent: {item}")
+
 def main():
     print_header("JURISLINK PORTFOLIO SYNC")
     print(f"Source: {SOURCE_DIR}")
@@ -124,6 +152,9 @@ def main():
 
     # 2. Generate Placeholder
     generate_placeholder(DEST_DIR)
+
+    # 3. 🔒 KILL SWITCH: Remove sensitive files from public mirror
+    remove_sensitive_files(DEST_DIR)
 
     print_header("SYNC COMPLETE")
     print("Now go to D:\\JurisLink_Portfolio and run:")
