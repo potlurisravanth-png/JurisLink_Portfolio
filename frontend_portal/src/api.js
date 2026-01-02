@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = "http://localhost:7071/api/chat";
+// Use environment variable for flexibility, fallback to Azure production URL
+const API_URL = import.meta.env.VITE_API_URL || "https://jurislink-api.azurewebsites.net/api/chat";
 
 /**
  * Send a message to the JurisLink backend.
@@ -39,6 +40,29 @@ export const sendMessage = async (message, history, lastState = null, signal = n
             throw new Error("CANCELLED");
         }
         console.error("API Error:", error);
+        throw error;
+    }
+};
+
+/**
+ * Request a PDF download (generates if missing).
+ */
+export const downloadPDF = async (userId, caseId, facts, strategy, research) => {
+    try {
+        // Use base URL from API_URL, replace path
+        const baseUrl = API_URL.replace('/chat', '');
+        const response = await axios.post(`${baseUrl}/download_brief`, {
+            user_id: userId,
+            case_id: caseId,
+            facts,
+            strategy,
+            research
+        }, {
+            responseType: 'blob' // Important for binary data
+        });
+        return response.data;
+    } catch (error) {
+        console.error("PDF Download Error:", error);
         throw error;
     }
 };

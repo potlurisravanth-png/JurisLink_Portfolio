@@ -10,6 +10,8 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, AIMessage
 from shared_lib.state import CaseState
+# Lazy Cleanup Integration
+from maintenance.cleanup_policy import run_cleanup
 
 CURRENT_DIR = Path(__file__).parent
 INSTRUCTIONS_PATH = CURRENT_DIR / "instructions.md"
@@ -70,6 +72,12 @@ def detect_completion_signal(messages) -> bool:
     return False
 
 def intake_node(state: CaseState) -> dict:
+    # Trigger Lazy Cleanup (Best effort, non-blocking if possible, but here synchronous)
+    try:
+        run_cleanup()
+    except Exception as e:
+        print(f"Cleanup warning: {e}")
+
     print("--- [01] INTAKE AGENT ACTIVE ---")
     
     system_prompt_text = load_instructions()
