@@ -40,20 +40,21 @@ const LoginModal = () => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Glass Overlay: fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-center justify-center */}
+            {/* Glass Overlay */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="relative w-full max-w-md bg-slate-900/80 border border-white/10 rounded-2xl shadow-2xl p-8 overflow-hidden backdrop-blur-md"
+                className="relative w-full max-w-md bg-glass-panel border border-glass-border rounded-2xl shadow-2xl p-8 overflow-hidden backdrop-blur-md"
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/20 to-indigo-600/20 mb-6 ring-1 ring-white/10 shadow-inner">
-                        <Shield size={32} className="text-blue-400" />
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-primary/10 mb-6 ring-1 ring-white/10 shadow-inner">
+                        <Shield size={32} className="text-accent-primary" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">JurisLink</h2>
-                    <p className="text-slate-400 text-sm">Secure Legal Intelligence Platform</p>
+                    <h2 className="text-2xl font-bold text-text-primary mb-2 tracking-tight">JurisLink</h2>
+                    <p className="text-text-secondary text-sm">Secure Legal Intelligence Platform</p>
                 </div>
 
                 {/* Error */}

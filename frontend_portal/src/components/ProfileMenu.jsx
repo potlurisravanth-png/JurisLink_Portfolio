@@ -7,22 +7,15 @@ const ProfileMenu = () => {
     const { currentUser, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
 
-    // Fixed Glass/Dark Styles
-    const borderColor = 'border-white/10';
-    const glassBg = 'bg-slate-900/80 backdrop-blur-md';
-    const textColor = 'text-slate-200';
-    const mutedColor = 'text-slate-400';
-    const hoverBg = 'hover:bg-white/5';
-
     return (
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full border transition-all ${borderColor} ${glassBg} ${hoverBg}`}
+                className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full border border-glass-border bg-glass-panel backdrop-blur-md hover:bg-white/5 transition-all text-text-primary"
                 title="Account Settings"
             >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm ring-1 ring-white/20">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent-primary to-indigo-500 flex items-center justify-center text-xs font-bold text-white shadow-sm ring-1 ring-white/20">
                     {currentUser?.photoURL ? (
                         <img src={currentUser.photoURL} alt="User" className="w-full h-full rounded-full object-cover" />
                     ) : (
@@ -32,11 +25,11 @@ const ProfileMenu = () => {
 
                 {/* Name & Chevron */}
                 <div className="hidden sm:flex flex-col items-start mr-1">
-                    <span className={`text-xs font-semibold ${textColor}`}>
+                    <span className="text-xs font-semibold text-text-primary">
                         {currentUser?.displayName?.split(' ')[0] || 'User'}
                     </span>
                 </div>
-                <ChevronDown size={14} className={`${mutedColor} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-text-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
@@ -51,14 +44,14 @@ const ProfileMenu = () => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.1 }}
-                            className={`absolute right-0 top-full mt-2 w-60 rounded-xl border shadow-2xl z-50 overflow-hidden ${glassBg} ${borderColor}`}
+                            className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-glass-border bg-glass-panel backdrop-blur-xl shadow-2xl z-50 overflow-hidden"
                         >
                             {/* User Header */}
-                            <div className={`p-4 border-b ${borderColor}`}>
-                                <p className={`text-sm font-semibold ${textColor} truncate`}>
+                            <div className="p-4 border-b border-glass-border">
+                                <p className="text-sm font-semibold text-text-primary truncate">
                                     {currentUser?.displayName || 'Guest User'}
                                 </p>
-                                <p className={`text-xs ${mutedColor} truncate font-medium`}>
+                                <p className="text-xs text-text-muted truncate font-medium">
                                     {currentUser?.email || 'Demo Mode'}
                                 </p>
                             </div>
