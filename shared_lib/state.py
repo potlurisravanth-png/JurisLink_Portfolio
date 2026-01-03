@@ -27,6 +27,7 @@ class CaseFacts(TypedDict, total=False):
     case_type: str
     witnesses: str
     damages: str
+    short_title: str  # AI-generated concise title for UI display
     status: Literal["IN_PROGRESS", "COMPLETE"]
 
 

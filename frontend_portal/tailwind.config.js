@@ -7,25 +7,25 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Semantic System
+                // Semantic System (Mapped to CSS Variables)
                 bg: {
-                    app: '#020617', // Slate 950
-                    surface: '#0f172a', // Slate 900
-                    subtle: '#1e293b', // Slate 800
+                    app: 'var(--color-bg-app)',
+                    surface: 'var(--color-bg-surface)',
+                    subtle: 'var(--color-bg-subtle)',
                 },
                 glass: {
-                    panel: 'rgba(15, 23, 42, 0.7)',
-                    border: 'rgba(255, 255, 255, 0.08)',
-                    highlight: 'rgba(255, 255, 255, 0.03)',
+                    panel: 'var(--color-glass-panel)',
+                    border: 'var(--color-glass-border)',
+                    highlight: 'var(--color-glass-highlight)',
                 },
                 accent: {
-                    primary: '#3b82f6', // Blue 500
-                    glow: 'rgba(59, 130, 246, 0.5)',
+                    primary: 'var(--color-accent-primary)',
+                    glow: 'var(--color-accent-glow)',
                 },
                 text: {
-                    primary: '#f8fafc', // Slate 50
-                    secondary: '#94a3b8', // Slate 400
-                    muted: '#64748b', // Slate 500
+                    primary: 'var(--color-text-primary)',
+                    secondary: 'var(--color-text-secondary)',
+                    muted: 'var(--color-text-muted)',
                 }
             },
             fontFamily: {
@@ -56,7 +56,5 @@ export default {
             }
         },
     },
-    plugins: [
-        require('@tailwindcss/typography'),
-    ],
+    plugins: [],
 }

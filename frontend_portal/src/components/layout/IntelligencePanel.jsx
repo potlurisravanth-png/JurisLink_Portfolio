@@ -3,7 +3,7 @@ import { Briefcase, Download, FileText, Activity } from 'lucide-react';
 import Button from '../ui/Button';
 import { downloadPDF } from '../../api';
 
-const IntelligencePanel = ({ facts, strategy, caseId, lastUpdated, currentUser }) => {
+const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, currentUser }) => {
     const [downloadStatus, setDownloadStatus] = useState('idle');
 
     const handleDownloadPDF = async () => {
@@ -48,6 +48,8 @@ const IntelligencePanel = ({ facts, strategy, caseId, lastUpdated, currentUser }
     const displayCaseId = caseId && caseId !== 'new' ? caseId.slice(0, 8).toUpperCase() : 'NEW';
     const status = getCaseStatus();
 
+    const displayTitle = title || (caseId === 'new' ? 'New Consultation' : `#${displayCaseId}`);
+
     return (
         <div className="flex flex-col h-full bg-transparent">
             {/* Header */}
@@ -58,7 +60,9 @@ const IntelligencePanel = ({ facts, strategy, caseId, lastUpdated, currentUser }
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex-1">
-                        <h1 className="text-xl font-bold text-text-primary tracking-tight">#{displayCaseId}</h1>
+                        <h1 className="text-xl font-bold text-text-primary tracking-tight truncate" title={displayTitle}>
+                            {displayTitle}
+                        </h1>
                     </div>
                     <div className={`px-2 py-1 rounded-md text-xs font-mono font-medium ${status.bg} ${status.color}`}>
                         {status.label}
@@ -78,7 +82,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, lastUpdated, currentUser }
                     {Object.keys(facts).length > 0 ? (
                         <div className="space-y-2">
                             {Object.entries(facts).filter(([k]) => k !== 'status').map(([key, value]) => (
-                                <div key={key} className="glass p-3 rounded-xl transition-all hover:bg-white/5">
+                                <div key={key} className="glass p-3 rounded-xl transition-all hover-bg">
                                     <span className="block text-[10px] font-bold text-text-muted uppercase mb-1">{formatFactKey(key)}</span>
                                     <p className="text-sm text-text-primary leading-relaxed">{String(value)}</p>
                                 </div>
@@ -107,12 +111,12 @@ const IntelligencePanel = ({ facts, strategy, caseId, lastUpdated, currentUser }
             </div>
 
             {/* Footer Action */}
-            <div className="p-4 border-t border-glass-border bg-black/20">
+            <div className="p-4 border-t border-glass-border footer-bg">
                 <Button
                     variant="primary"
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-none"
                     onClick={handleDownloadPDF}
-                    disabled={!caseId || caseId === 'new' || downloadStatus === 'generating'}
+                    disabled={!caseId || caseId === 'new' || downloadStatus === 'generating' || !facts || Object.keys(facts).length === 0}
                     icon={Download}
                 >
                     {downloadStatus === 'generating' ? 'Generating Brief...' : 'Download Official Brief'}

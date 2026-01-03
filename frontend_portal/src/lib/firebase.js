@@ -1,14 +1,23 @@
-// Firebase configuration for JurisLink
+/**
+ * Firebase Configuration for JurisLink
+ * 
+ * This file initializes Firebase Auth with OAuth providers.
+ * Fill in your Firebase config from Firebase Console -> Project Settings.
+ */
 import { initializeApp } from 'firebase/app';
 import {
     getAuth,
     GoogleAuthProvider,
     OAuthProvider,
-    connectAuthEmulator
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    updateProfile,
+    signOut,
+    onAuthStateChanged
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 
-// 1. Load Configuration from Environment Variables
+// Firebase configuration - set these in your .env file
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -18,44 +27,39 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// 2. Validate Configuration
-const isConfigValid = firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId;
+// Check if Firebase is configured
+const isFirebaseConfigured = () => {
+    return firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId;
+};
 
+// Initialize Firebase (only if configured)
+let app = null;
 let auth = null;
-let db = null;
-const googleProvider = new GoogleAuthProvider();
-// Microsoft Provider configuration
-const microsoftProvider = new OAuthProvider('microsoft.com');
-microsoftProvider.setCustomParameters({
-    // Force re-consent to ensure permissions are granted
-    prompt: 'consent',
-    // Legal-specific tenant if needed, otherwise common
-    tenant: 'common'
-});
 
-const githubProvider = new OAuthProvider('github.com');
-let firebaseInitialized = false;
-
-if (isConfigValid) {
-    try {
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        firebaseInitialized = true;
-        console.log('✅ Firebase initialized successfully');
-    } catch (error) {
-        console.error('❌ Firebase initialization error:', error);
-    }
-} else {
-    console.warn('⚠️ Firebase Config Missing. Check .env file. App running in Demo Mode.');
-    // In demo mode, auth and db remain null, consistent with AuthContext fallback
+if (isFirebaseConfigured()) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
 }
 
+// Providers
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
+const microsoftProvider = new OAuthProvider('microsoft.com');
+microsoftProvider.addScope('email');
+microsoftProvider.addScope('profile');
+
+// Export auth functions
 export {
     auth,
-    db,
+    isFirebaseConfigured,
     googleProvider,
     microsoftProvider,
-    githubProvider,
-    firebaseInitialized
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    updateProfile,
+    signOut,
+    onAuthStateChanged
 };

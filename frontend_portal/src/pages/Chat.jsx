@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Bot, Menu, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { sendMessage } from '../api';
+import { useTheme } from '../context/ThemeContext.jsx';
+import { sendMessage, getUserSessions, getSession, saveSessionToAPI, deleteSessionFromAPI } from '../api';
 
 // Components
 import AppShell from '../components/layout/AppShell';
@@ -14,67 +15,16 @@ import WelcomeScreen from '../components/chat/WelcomeScreen';
 import ProfileMenu from '../components/ProfileMenu';
 
 // Helpers
-const STORAGE_KEYS = {
-    SESSIONS_INDEX: 'jurislink_sessions_index',
-    SESSION_PREFIX: 'jurislink_session_',
-};
-
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
-const loadSessionsIndex = () => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSIONS_INDEX)) || []; } catch { return []; }
-};
-
-const saveSessionToStorage = (sessionId, data, title, isRenamed = false) => {
-    localStorage.setItem(STORAGE_KEYS.SESSION_PREFIX + sessionId, JSON.stringify(data));
-    const index = loadSessionsIndex();
-    const existingEntryIndex = index.findIndex(s => s.id === sessionId);
-    const entry = {
-        id: sessionId,
-        title: title || "New Consultation",
-        date: new Date().toLocaleDateString(),
-        timestamp: Date.now(),
-        isRenamed: isRenamed
-    };
-    if (existingEntryIndex >= 0) {
-        const existing = index[existingEntryIndex];
-        entry.isRenamed = isRenamed || existing.isRenamed;
-        if (existing.isRenamed && !isRenamed) entry.title = existing.title;
-        index[existingEntryIndex] = { ...existing, ...entry };
-    } else {
-        index.unshift(entry);
-    }
-    localStorage.setItem(STORAGE_KEYS.SESSIONS_INDEX, JSON.stringify(index));
-    return index;
-};
-
-const renameSessionInStorage = (sessionId, newTitle) => {
-    const index = loadSessionsIndex();
-    const entryIndex = index.findIndex(s => s.id === sessionId);
-    if (entryIndex >= 0) {
-        index[entryIndex].title = newTitle;
-        index[entryIndex].isRenamed = true;
-        localStorage.setItem(STORAGE_KEYS.SESSIONS_INDEX, JSON.stringify(index));
-    }
-    return index;
-};
-
-const deleteSessionFromStorage = (sessionId) => {
-    localStorage.removeItem(STORAGE_KEYS.SESSION_PREFIX + sessionId);
-    const index = loadSessionsIndex().filter(s => s.id !== sessionId);
-    localStorage.setItem(STORAGE_KEYS.SESSIONS_INDEX, JSON.stringify(index));
-    return index;
-};
-
-const loadSessionFromStorage = (sessionId) => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSION_PREFIX + sessionId)); } catch { return null; }
-};
+// User-scoped localStorage keys
+const getStorageKey = (userId, suffix) => `jurislink_${userId}_${suffix}`;
 
 const Chat = () => {
     const { id: caseId } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-    const { currentUser } = useAuth();
+    const { currentUser, getIdToken } = useAuth();
+    const { theme, setTheme } = useTheme();
 
     // State
     const [messages, setMessages] = useState([]);
@@ -86,44 +36,230 @@ const Chat = () => {
     const [strategy, setStrategy] = useState(null);
     const [backendState, setBackendState] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(null);
+    const [sessionsLoading, setSessionsLoading] = useState(true);
 
     // UI State
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isAnalysisOpen, setIsAnalysisOpen] = useState(true);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const messagesEndRef = useRef(null);
     const abortControllerRef = useRef(null);
 
-    // Initial Load & Session Management
-    useEffect(() => {
-        setSessions(loadSessionsIndex());
-    }, []);
+    // Get user ID (for scoping data)
+    const userId = currentUser?.uid || 'anonymous';
 
-    useEffect(() => {
-        if (caseId && caseId !== 'new') {
-            const data = loadSessionFromStorage(caseId);
-            if (data) {
-                setCurrentSessionId(caseId);
-                setMessages(data.messages || []);
-                setFacts(data.facts || {});
-                setStrategy(data.strategy || null);
-                setBackendState(data.backendState || null);
-            }
-        } else if (caseId === 'new') {
-            setCurrentSessionId(null);
-            setMessages([]);
-            setFacts({});
-            setStrategy(null);
-            setBackendState(null);
+    // ==========================================================================
+    // SESSION STORAGE (with API + localStorage fallback)
+    // ==========================================================================
+
+    // Load sessions from API (with localStorage cache)
+    const loadSessions = useCallback(async () => {
+        if (!currentUser) {
+            setSessions([]);
+            setSessionsLoading(false);
+            return;
         }
-    }, [caseId]);
+
+        try {
+            const token = await getIdToken();
+            const apiSessions = await getUserSessions(token, userId);
+
+            if (apiSessions) {
+                setSessions(apiSessions);
+                // Cache in localStorage
+                localStorage.setItem(getStorageKey(userId, 'sessions'), JSON.stringify(apiSessions));
+            } else {
+                // Fallback to localStorage
+                const cached = localStorage.getItem(getStorageKey(userId, 'sessions'));
+                setSessions(cached ? JSON.parse(cached) : []);
+            }
+        } catch (error) {
+            console.error('Failed to load sessions:', error);
+            // Fallback to localStorage
+            const cached = localStorage.getItem(getStorageKey(userId, 'sessions'));
+            setSessions(cached ? JSON.parse(cached) : []);
+        } finally {
+            setSessionsLoading(false);
+        }
+    }, [currentUser, getIdToken, userId]);
+
+    // Load specific session
+    const loadSession = useCallback(async (sessionId) => {
+        if (!currentUser || !sessionId) return null;
+
+        try {
+            const token = await getIdToken();
+            const session = await getSession(token, userId, sessionId);
+
+            if (session) {
+                // Cache locally
+                localStorage.setItem(getStorageKey(userId, `session_${sessionId}`), JSON.stringify(session));
+                return session;
+            }
+        } catch (error) {
+            console.error('Failed to load session:', error);
+        }
+
+        // Fallback to localStorage
+        const cached = localStorage.getItem(getStorageKey(userId, `session_${sessionId}`));
+        return cached ? JSON.parse(cached) : null;
+    }, [currentUser, getIdToken, userId]);
+
+    // Save session (to API + localStorage)
+    const saveSession = useCallback(async (sessionId, data, title, isRenamed = false) => {
+        const sessionData = {
+            session_id: sessionId,
+            title: title || "New Consultation",
+            date: new Date().toLocaleDateString(),
+            timestamp: Date.now(),
+            isRenamed: isRenamed,
+            messages: data.messages || [],
+            facts: data.facts || {},
+            strategy: data.strategy,
+            backendState: data.backendState
+        };
+
+        // Update local state immediately
+        setSessions(prev => {
+            const existing = prev.find(s => s.id === sessionId);
+            if (existing) {
+                // Preserve isRenamed if already set
+                if (existing.isRenamed && !isRenamed) {
+                    sessionData.title = existing.title;
+                    sessionData.isRenamed = true;
+                }
+                return prev.map(s => s.id === sessionId ? { ...s, ...sessionData, id: sessionId } : s);
+            }
+            return [{ id: sessionId, ...sessionData }, ...prev];
+        });
+
+        // Save to localStorage immediately
+        localStorage.setItem(getStorageKey(userId, `session_${sessionId}`), JSON.stringify(sessionData));
+
+        // Update sessions index in localStorage
+        const sessionsIndex = JSON.parse(localStorage.getItem(getStorageKey(userId, 'sessions')) || '[]');
+        const existingIdx = sessionsIndex.findIndex(s => s.id === sessionId);
+        const indexEntry = { id: sessionId, title: sessionData.title, date: sessionData.date, timestamp: sessionData.timestamp, isRenamed: sessionData.isRenamed };
+        if (existingIdx >= 0) {
+            sessionsIndex[existingIdx] = indexEntry;
+        } else {
+            sessionsIndex.unshift(indexEntry);
+        }
+        localStorage.setItem(getStorageKey(userId, 'sessions'), JSON.stringify(sessionsIndex));
+
+        // Save to API in background
+        if (currentUser) {
+            try {
+                const token = await getIdToken();
+                await saveSessionToAPI(token, userId, sessionId, sessionData);
+            } catch (error) {
+                console.error('Failed to save session to API:', error);
+            }
+        }
+
+        return sessionsIndex;
+    }, [currentUser, getIdToken, userId]);
+
+    // Delete session
+    const deleteSession = useCallback(async (sessionId) => {
+        // Update local state immediately
+        setSessions(prev => prev.filter(s => s.id !== sessionId));
+
+        // Remove from localStorage
+        localStorage.removeItem(getStorageKey(userId, `session_${sessionId}`));
+        const sessionsIndex = JSON.parse(localStorage.getItem(getStorageKey(userId, 'sessions')) || '[]');
+        const filtered = sessionsIndex.filter(s => s.id !== sessionId);
+        localStorage.setItem(getStorageKey(userId, 'sessions'), JSON.stringify(filtered));
+
+        // Delete from API
+        if (currentUser) {
+            try {
+                const token = await getIdToken();
+                await deleteSessionFromAPI(token, userId, sessionId);
+            } catch (error) {
+                console.error('Failed to delete session from API:', error);
+            }
+        }
+
+        return filtered;
+    }, [currentUser, getIdToken, userId]);
+
+    // Rename session
+    const renameSession = useCallback(async (sessionId, newTitle) => {
+        setSessions(prev => prev.map(s =>
+            s.id === sessionId ? { ...s, title: newTitle, isRenamed: true } : s
+        ));
+
+        // Update localStorage
+        const sessionsIndex = JSON.parse(localStorage.getItem(getStorageKey(userId, 'sessions')) || '[]');
+        const idx = sessionsIndex.findIndex(s => s.id === sessionId);
+        if (idx >= 0) {
+            sessionsIndex[idx].title = newTitle;
+            sessionsIndex[idx].isRenamed = true;
+            localStorage.setItem(getStorageKey(userId, 'sessions'), JSON.stringify(sessionsIndex));
+        }
+
+        // Update session data
+        const sessionData = JSON.parse(localStorage.getItem(getStorageKey(userId, `session_${sessionId}`)) || '{}');
+        sessionData.title = newTitle;
+        sessionData.isRenamed = true;
+        localStorage.setItem(getStorageKey(userId, `session_${sessionId}`), JSON.stringify(sessionData));
+
+        // Update API
+        if (currentUser) {
+            try {
+                const token = await getIdToken();
+                await saveSessionToAPI(token, userId, sessionId, sessionData);
+            } catch (error) {
+                console.error('Failed to rename session in API:', error);
+            }
+        }
+
+        return sessionsIndex;
+    }, [currentUser, getIdToken, userId]);
+
+    // ==========================================================================
+    // EFFECTS
+    // ==========================================================================
+
+    // Load sessions when user changes
+    useEffect(() => {
+        loadSessions();
+    }, [loadSessions]);
+
+    // Load session when caseId changes
+    useEffect(() => {
+        const load = async () => {
+            if (caseId && caseId !== 'new') {
+                const data = await loadSession(caseId);
+                if (data) {
+                    setCurrentSessionId(caseId);
+                    setMessages(data.messages || []);
+                    setFacts(data.facts || {});
+                    setStrategy(data.strategy || null);
+                    setBackendState(data.backendState || null);
+                }
+            } else if (caseId === 'new') {
+                setCurrentSessionId(null);
+                setMessages([]);
+                setFacts({});
+                setStrategy(null);
+                setBackendState(null);
+            }
+        };
+        load();
+    }, [caseId, loadSession]);
 
     // Scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);
 
-    // Handlers
+    // ==========================================================================
+    // HANDLERS
+    // ==========================================================================
+
     const handleSend = async (manualContent = null) => {
         const textToSend = typeof manualContent === 'string' ? manualContent : input;
         if (!textToSend.trim()) return;
@@ -137,7 +273,9 @@ const Chat = () => {
         abortControllerRef.current = new AbortController();
 
         try {
-            const data = await sendMessage(textToSend, updatedMessages, backendState, abortControllerRef.current.signal);
+            let currentBackendState = backendState || {};
+
+            const data = await sendMessage(textToSend, updatedMessages, currentBackendState, abortControllerRef.current.signal);
 
             const newBackendState = data.final_state || backendState;
             const newFacts = data.facts || facts;
@@ -158,20 +296,52 @@ const Chat = () => {
                 navigate(`/case/${activeSessionId}`, { replace: true });
             }
 
-            // Auto Title
+            // Auto Title Logic
             let sessionTitle = "New Consultation";
-            const cleanIssue = (newFacts.Legal_Issue || "").trim();
-            if (cleanIssue && !["hello", "hi"].some(g => cleanIssue.toLowerCase().startsWith(g))) {
-                sessionTitle = cleanIssue + (newFacts.Jurisdiction ? ` - ${newFacts.Jurisdiction}` : "");
-            } else {
-                const current = sessions.find(s => s.id === activeSessionId);
-                if (current) sessionTitle = current.title;
+
+            // 1. Prefer AI generated short title
+            if (newFacts.short_title && newFacts.short_title !== "Unknown" && newFacts.short_title.length > 3) {
+                sessionTitle = newFacts.short_title;
+            }
+            // 2. Fallback to extracting from keys
+            else {
+                const titleCandidates = [
+                    newFacts.Legal_Issue, newFacts.legal_issue,
+                    newFacts.Issue, newFacts.issue,
+                    newFacts.Case_Type, newFacts.case_type,
+                    newFacts.Summary, newFacts.summary
+                ];
+
+                const foundTitle = titleCandidates.find(t => t && typeof t === 'string' && t.length > 3);
+
+                if (foundTitle) {
+                    sessionTitle = foundTitle.trim();
+                } else {
+                    // 3. Last resort: user first message
+                    const firstUserMsg = updatedMessages.find(m => m.role === 'user');
+                    if (firstUserMsg && firstUserMsg.content) {
+                        const preview = firstUserMsg.content.slice(0, 30).replace(/\n/g, ' ').trim();
+                        if (preview.length > 3 && !["hello", "hi", "hey"].some(v => preview.toLowerCase().startsWith(v))) {
+                            sessionTitle = preview;
+                        }
+                    }
+                }
             }
 
-            const updatedIndex = saveSessionToStorage(activeSessionId, {
+            // Hard truncate to ensure sidebar fit
+            if (sessionTitle.length > 25) {
+                sessionTitle = sessionTitle.substring(0, 25) + "...";
+            }
+
+            // Only update title if not manually renamed by user
+            const current = sessions.find(s => s.id === activeSessionId);
+            if (current && current.isRenamed) {
+                sessionTitle = current.title;
+            }
+
+            await saveSession(activeSessionId, {
                 messages: finalMessages, facts: newFacts, strategy: newStrategy, backendState: newBackendState
             }, sessionTitle);
-            setSessions(updatedIndex);
 
         } catch (error) {
             if (error.message !== "CANCELLED") {
@@ -190,19 +360,27 @@ const Chat = () => {
     };
 
     const handleNewChat = () => {
-        if (messages.length > 0 && !window.confirm("Start new chat? Current view is saved.")) return;
-        navigate('/case/new');
+        if (caseId === 'new') {
+            setCurrentSessionId(null);
+            setMessages([]);
+            setFacts({});
+            setStrategy(null);
+            setBackendState(null);
+            setInput('');
+        } else {
+            navigate('/case/new');
+        }
     };
 
-    const handleDeleteSession = (sid) => {
+    const handleDeleteSession = async (sid) => {
         if (window.confirm("Delete this case history?")) {
-            setSessions(deleteSessionFromStorage(sid));
+            await deleteSession(sid);
             if (currentSessionId === sid) navigate('/case/new');
         }
     };
 
-    const handleRenameSession = (sid, title) => {
-        setSessions(renameSessionInStorage(sid, title));
+    const handleRenameSession = async (sid, title) => {
+        await renameSession(sid, title);
     };
 
     // Responsive toggle
@@ -223,12 +401,13 @@ const Chat = () => {
             sidebar={
                 <Sidebar
                     onNewChat={handleNewChat}
-                    onSettings={() => { }}
+                    onSettings={() => setIsSettingsOpen(true)}
                     onHistoryClick={(sid) => navigate(`/case/${sid}`)}
                     onDeleteSession={handleDeleteSession}
                     onRenameSession={handleRenameSession}
                     sessions={sessions}
                     currentSessionId={currentSessionId}
+                    loading={sessionsLoading}
                 />
             }
             analysisPanel={
@@ -236,6 +415,7 @@ const Chat = () => {
                     facts={facts}
                     strategy={strategy}
                     caseId={currentSessionId || caseId}
+                    title={sessions.find(s => s.id === (currentSessionId || caseId))?.title}
                     lastUpdated={lastUpdated}
                     currentUser={currentUser}
                 />
@@ -244,13 +424,15 @@ const Chat = () => {
             {/* Header */}
             <header className="flex-none h-16 border-b border-glass-border bg-glass-highlight backdrop-blur flex items-center justify-between px-6 z-30">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 -ml-2 text-text-muted hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 -ml-2 text-text-muted hover:text-text-primary hover-bg rounded-lg transition-colors">
                         <Menu size={20} />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                            <Bot size={20} className="text-white" />
-                        </div>
+                        <img
+                            src="/logo.png"
+                            alt="JurisLink"
+                            className="w-8 h-8 rounded-lg shadow-lg shadow-blue-500/20"
+                        />
                         <h1 className="font-semibold text-lg text-text-primary tracking-tight">
                             JURISLINK <span className="ml-2 px-1.5 py-0.5 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-accent-primary text-[10px] uppercase font-bold tracking-wider">v4.0</span>
                         </h1>
@@ -260,7 +442,7 @@ const Chat = () => {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsAnalysisOpen(!isAnalysisOpen)}
-                        className={`p-2 rounded-lg transition-colors ${isAnalysisOpen ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-muted hover:text-text-primary hover:bg-white/5'}`}
+                        className={`p-2 rounded-lg transition-colors ${isAnalysisOpen ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-muted hover:text-text-primary hover-bg'}`}
                         title="Toggle Intelligence Panel"
                     >
                         <Briefcase size={20} />
@@ -305,6 +487,36 @@ const Chat = () => {
                     JurisLink AI can make mistakes. Verify important legal information.
                 </p>
             </div>
+
+            {/* Preferences Modal */}
+            {isSettingsOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}>
+                    <div className="bg-bg-surface border border-glass-border rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all" onClick={e => e.stopPropagation()}>
+                        <h2 className="text-lg font-bold text-text-primary mb-4">Preferences</h2>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-text-secondary">Theme</span>
+                                <select
+                                    value={theme}
+                                    onChange={(e) => setTheme(e.target.value)}
+                                    className="bg-bg-subtle border border-glass-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent-primary cursor-pointer appearance-none pr-8"
+                                    style={{
+                                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                        backgroundPosition: 'right 0.5rem center',
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundSize: '1.5em 1.5em'
+                                    }}
+                                >
+                                    <option value="system" className="bg-bg-surface text-text-primary">System Default</option>
+                                    <option value="dark" className="bg-bg-surface text-text-primary">Dark Mode</option>
+                                    <option value="light" className="bg-bg-surface text-text-primary">Light Mode</option>
+                                    <option value="high-contrast" className="bg-bg-surface text-text-primary">High Contrast</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppShell>
     );
 };

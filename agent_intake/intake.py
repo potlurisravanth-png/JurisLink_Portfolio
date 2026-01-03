@@ -113,9 +113,10 @@ Output the JSON block with all information you have gathered so far.
     print("="*30 + "\n")
     
     next_step = None
+    existing_facts = state.get("case_facts", {})
     extracted_facts = {}
 
-    # Regex JSON extraction
+    # Regex JSON extraction (handles both partial and complete JSON)
     json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", content, re.DOTALL)
     
     if json_match:
@@ -124,22 +125,42 @@ Output the JSON block with all information you have gathered so far.
             extracted_facts = json.loads(json_str)
             print(f"--- SUCCESS: Extracted {len(extracted_facts)} Facts ---")
             
+            # Merge with existing facts (preserve previously extracted data like short_title)
+            merged_facts = {**existing_facts, **extracted_facts}
+            extracted_facts = merged_facts
+            
             # Check if we have minimum required facts
             if extracted_facts.get("status") == "COMPLETE" or is_completing:
                 next_step = "researcher"
                 extracted_facts["status"] = "COMPLETE"
                 
                 clean_msg = content.replace(json_str, "").strip()
+                # Remove markdown code block remnants
+                clean_msg = re.sub(r"```json\s*```", "", clean_msg).strip()
+                clean_msg = re.sub(r"```\s*```", "", clean_msg).strip()
                 if not clean_msg:
                     clean_msg = "Thank you for sharing your story. I have all the information I need. Let me now research the relevant laws for your case."
                 response.content = clean_msg
                 print("--- Transitioning to RESEARCHER ---")
+            else:
+                # For IN_PROGRESS, also clean JSON from visible response
+                clean_msg = content.replace(json_str, "").strip()
+                clean_msg = re.sub(r"```json\s*```", "", clean_msg).strip()
+                clean_msg = re.sub(r"```\s*```", "", clean_msg).strip()
+                if clean_msg:
+                    response.content = clean_msg
 
         except json.JSONDecodeError as e:
             print(f"--- ERROR: JSON parse failed: {e} ---")
+            # Preserve existing facts even if new extraction fails
+            extracted_facts = existing_facts
+    else:
+        # No JSON found, preserve existing facts
+        extracted_facts = existing_facts
     
     return {
         "messages": [response],
         "case_facts": extracted_facts,
         "next_step": next_step
     }
+

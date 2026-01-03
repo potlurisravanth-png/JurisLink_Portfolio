@@ -25,28 +25,28 @@ const StreamedMessage = ({ content, isFinal }) => {
     if (!display) return <span className="animate-pulse text-text-muted">...</span>;
 
     return (
-        <div className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/30 prose-pre:border prose-pre:border-white/10">
+        <div className="prose dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-glass-border prose-headings:text-text-primary prose-p:text-text-primary prose-strong:text-text-primary prose-li:text-text-primary">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                     code({ node, inline, className, children, ...props }) {
                         return !inline ? (
-                            <div className="relative group my-4 rounded-xl overflow-hidden border border-white/5 bg-black/40">
-                                <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5 text-xs text-text-muted font-mono">
+                            <div className="relative group my-4 rounded-xl overflow-hidden border border-glass-border bg-bg-subtle">
+                                <div className="flex items-center justify-between px-4 py-2 bg-glass-highlight border-b border-glass-border text-xs text-text-muted font-mono">
                                     <span>Code</span>
                                     <button
-                                        className="hover:text-white transition-colors"
+                                        className="hover:text-text-primary transition-colors"
                                         onClick={() => navigator.clipboard.writeText(String(children))}
                                     >
                                         <Copy size={12} />
                                     </button>
                                 </div>
-                                <code className={`block p-4 overflow-x-auto ${className}`} {...props}>
+                                <code className={`block p-4 overflow-x-auto text-text-primary ${className}`} {...props}>
                                     {children}
                                 </code>
                             </div>
                         ) : (
-                            <code className="bg-white/10 rounded px-1.5 py-0.5 font-mono text-sm text-accent-primary" {...props}>
+                            <code className="bg-accent-primary/10 rounded px-1.5 py-0.5 font-mono text-sm text-accent-primary" {...props}>
                                 {children}
                             </code>
                         );
