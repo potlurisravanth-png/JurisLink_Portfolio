@@ -2,14 +2,13 @@
 INTAKE AGENT - JurisLink
 Role: Empathetic legal intake specialist that gathers comprehensive case details.
 """
-import os
 import json
 import re
 from pathlib import Path
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage, AIMessage
 from shared_lib.state import CaseState
+from shared_lib.config import AgentConfig
 # Lazy Cleanup Integration
 from maintenance.cleanup_policy import run_cleanup
 
@@ -23,8 +22,8 @@ def load_instructions():
     except FileNotFoundError:
         return "You are the Intake Agent."
 
-# Lower temperature for more consistent JSON output
-llm = ChatOpenAI(model="gpt-4o", temperature=0.3)
+# Initialize LLM via centralized config
+llm = AgentConfig.get_llm("intake")
 
 def detect_completion_signal(messages) -> bool:
     """Check if the user has signaled completion in their last message."""
@@ -71,6 +70,50 @@ def detect_completion_signal(messages) -> bool:
     
     return False
 
+def parse_system_context(messages) -> dict:
+    """
+    Parse GPS context from frontend 'System Context:' messages.
+    
+    Returns dict with jurisdiction info if found, empty dict otherwise.
+    """
+    context = {}
+    
+    for msg in messages:
+        content = None
+        # Handle different message formats
+        if hasattr(msg, 'content'):
+            content = msg.content
+        elif isinstance(msg, dict) and 'content' in msg:
+            content = msg['content']
+        
+        if content and content.startswith("System Context:"):
+            print(f"--- GPS CONTEXT DETECTED ---")
+            # Parse: "System Context: User is located in {region}, {country}. The legal issue is {issue}."
+            try:
+                import re
+                
+                # Extract location
+                loc_match = re.search(r"located in ([^,]+),\s*([^.]+)", content)
+                if loc_match:
+                    context['state'] = loc_match.group(1).strip()
+                    context['country'] = loc_match.group(2).strip()
+                    context['jurisdiction'] = f"{context['state']}, {context['country']}"
+                    print(f"    Location: {context['jurisdiction']}")
+                
+                # Extract issue
+                issue_match = re.search(r"legal issue is ([^.]+)", content)
+                if issue_match:
+                    context['issue'] = issue_match.group(1).strip()
+                    context['case_type'] = context['issue']
+                    print(f"    Issue: {context['issue']}")
+                    
+            except Exception as e:
+                print(f"    GPS parse error: {e}")
+            
+            break  # Only process first system context
+    
+    return context
+
 def intake_node(state: CaseState) -> dict:
     # Trigger Lazy Cleanup (Best effort, non-blocking if possible, but here synchronous)
     try:
@@ -80,11 +123,29 @@ def intake_node(state: CaseState) -> dict:
 
     print("--- [01] INTAKE AGENT ACTIVE ---")
     
+    # Check for GPS context from frontend
+    gps_context = parse_system_context(state["messages"])
+    
+    # Pre-populate facts with GPS context
+    existing_facts = state.get("case_facts", {})
+    if gps_context:
+        existing_facts = {**existing_facts, **gps_context}
+        print(f"--- Pre-filled {len(gps_context)} fields from GPS ---")
+    
     system_prompt_text = load_instructions()
     messages = state["messages"]
     
+    # Filter out system context messages before passing to LLM
+    filtered_messages = [
+        msg for msg in messages 
+        if not (
+            (hasattr(msg, 'content') and msg.content.startswith("System Context:")) or
+            (isinstance(msg, dict) and msg.get('content', '').startswith("System Context:"))
+        )
+    ]
+    
     # Check if user is signaling completion
-    is_completing = detect_completion_signal(messages)
+    is_completing = detect_completion_signal(filtered_messages)
     
     if is_completing:
         # Force the agent to output JSON by adding a strong system instruction
@@ -102,7 +163,7 @@ Output the JSON block with all information you have gathered so far.
     ])
     
     chain = prompt | llm
-    response = chain.invoke({"messages": messages})
+    response = chain.invoke({"messages": filtered_messages})
     content = response.content
     
     # Debug output
@@ -113,7 +174,7 @@ Output the JSON block with all information you have gathered so far.
     print("="*30 + "\n")
     
     next_step = None
-    existing_facts = state.get("case_facts", {})
+    # existing_facts already populated with GPS context above
     extracted_facts = {}
 
     # Regex JSON extraction (handles both partial and complete JSON)

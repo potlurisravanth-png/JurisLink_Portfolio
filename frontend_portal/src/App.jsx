@@ -1,18 +1,24 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import Chat from './pages/Chat';
+import LandingPage from './pages/LandingPage';
 import LoginModal from './components/LoginModal';
 import { AnimatePresence } from 'framer-motion';
 
 
-// Helper to access Auth Context for the Modal
+// Helper to access Auth Context for the Modal (only shown on protected routes)
 const AuthWrapper = () => {
   const { currentUser } = useAuth();
+  const location = useLocation();
+
+  // Don't require login on landing page
+  const isLandingPage = location.pathname === '/';
+
   return (
     <AnimatePresence>
-      {!currentUser && <LoginModal />}
+      {!currentUser && !isLandingPage && <LoginModal />}
     </AnimatePresence>
   );
 };
@@ -27,10 +33,19 @@ const App = () => {
             {/* GLOBAL DECORATIVE BACKGROUND */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-bg-subtle/40 via-bg-app to-bg-app -z-10 pointer-events-none"></div>
 
-            {/* ROUTING - Chat.jsx handles its own layout (Sidebars + Content) */}
+            {/* ROUTING */}
             <Routes>
-              <Route path="/" element={<Chat />} />
+              {/* Landing Page - Tool Grid (No login required) */}
+              <Route path="/" element={<LandingPage />} />
+
+              {/* Tool Routes */}
+              <Route path="/tool/chat" element={<Chat />} />
+              <Route path="/tool/chat/:id" element={<Chat />} />
+
+              {/* Legacy route support */}
               <Route path="/case/:id" element={<Chat />} />
+
+              {/* Catch-all */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
 
@@ -44,3 +59,4 @@ const App = () => {
 };
 
 export default App;
+

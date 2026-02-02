@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Bot, Menu, Briefcase } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Bot, Menu, Briefcase, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { sendMessage, getUserSessions, getSession, saveSessionToAPI, deleteSessionFromAPI } from '../api';
@@ -23,8 +23,13 @@ const getStorageKey = (userId, suffix) => `jurislink_${userId}_${suffix}`;
 const Chat = () => {
     const { id: caseId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { currentUser, getIdToken } = useAuth();
     const { theme, setTheme } = useTheme();
+
+    // Legal GPS Context (passed from LandingPage)
+    const legalContext = location.state?.legalContext || {};
+    const [gpsContextSent, setGpsContextSent] = useState(false);
 
     // State
     const [messages, setMessages] = useState([]);
@@ -260,14 +265,22 @@ const Chat = () => {
     // HANDLERS
     // ==========================================================================
 
-    const handleSend = async (manualContent = null) => {
+    const handleSend = async (manualContent = null, isSystemContext = false) => {
         const textToSend = typeof manualContent === 'string' ? manualContent : input;
         if (!textToSend.trim()) return;
 
-        const userMsg = { role: 'user', content: textToSend };
-        const updatedMessages = [...messages, userMsg];
-        setMessages(updatedMessages);
+        // For system context messages, don't show in UI
+        const userMsg = isSystemContext
+            ? null
+            : { role: 'user', content: textToSend };
+        const updatedMessages = userMsg ? [...messages, userMsg] : messages;
+        if (userMsg) setMessages(updatedMessages);
         if (!manualContent) setInput('');
+
+        // Build history for backend (include system context if present)
+        const historyForBackend = isSystemContext
+            ? [{ role: 'system', content: textToSend }, ...updatedMessages]
+            : updatedMessages;
 
         setLoading(true);
         abortControllerRef.current = new AbortController();
@@ -275,7 +288,7 @@ const Chat = () => {
         try {
             let currentBackendState = backendState || {};
 
-            const data = await sendMessage(textToSend, updatedMessages, currentBackendState, abortControllerRef.current.signal);
+            const data = await sendMessage(textToSend, historyForBackend, currentBackendState, abortControllerRef.current.signal);
 
             const newBackendState = data.final_state || backendState;
             const newFacts = data.facts || facts;
@@ -286,7 +299,10 @@ const Chat = () => {
             setStrategy(newStrategy);
             setLastUpdated(Date.now());
 
-            const finalMessages = [...updatedMessages, { role: 'assistant', content: data.response, docUrl: data.docUrl }];
+            // Only add assistant response to UI if not a pure system context call
+            const finalMessages = isSystemContext && !data.response.includes('?')
+                ? updatedMessages
+                : [...updatedMessages, { role: 'assistant', content: data.response, docUrl: data.docUrl }];
             setMessages(finalMessages);
 
             // Session Management
@@ -393,6 +409,17 @@ const Chat = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Auto-send GPS context on first user message
+    const handleUserSend = async (content = null) => {
+        // If we have GPS context and haven't sent it yet, prepend system context
+        if (legalContext.isComplete && !gpsContextSent && messages.length === 0) {
+            const systemContext = `System Context: User is located in ${legalContext.region}, ${legalContext.jurisdiction}. The legal issue is ${legalContext.issue}. Prioritize laws from this jurisdiction.`;
+            setGpsContextSent(true);
+            // Send system context silently, then send actual user message
+            await handleSend(systemContext, true);
+        }
+        await handleSend(content);
+    };
 
     return (
         <AppShell
@@ -402,7 +429,7 @@ const Chat = () => {
                 <Sidebar
                     onNewChat={handleNewChat}
                     onSettings={() => setIsSettingsOpen(true)}
-                    onHistoryClick={(sid) => navigate(`/case/${sid}`)}
+                    onHistoryClick={(sid) => navigate(`/tool/chat/${sid}`)}
                     onDeleteSession={handleDeleteSession}
                     onRenameSession={handleRenameSession}
                     sessions={sessions}
@@ -437,6 +464,19 @@ const Chat = () => {
                             JURISLINK <span className="ml-2 px-1.5 py-0.5 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-accent-primary text-[10px] uppercase font-bold tracking-wider">v4.0</span>
                         </h1>
                     </div>
+
+                    {/* GPS Context Badge */}
+                    {legalContext.isComplete && (
+                        <div className="hidden md:flex items-center gap-2 ml-4 px-3 py-1.5 glass rounded-full text-xs">
+                            <MapPin size={12} className="text-accent-primary" />
+                            <span className="text-text-secondary">
+                                {legalContext.jurisdictionCode === 'USA' ? '🇺🇸' :
+                                    legalContext.jurisdictionCode === 'India' ? '🇮🇳' :
+                                        legalContext.jurisdictionCode === 'UK' ? '🇬🇧' : '🇨🇦'}
+                                {' '}{legalContext.region} • {legalContext.issue}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -455,7 +495,7 @@ const Chat = () => {
             {/* Chat Content */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-8 scrollbar-thin relative z-10">
                 {messages.length === 0 ? (
-                    <WelcomeScreen onSuggestionClick={(prompt) => handleSend(prompt)} />
+                    <WelcomeScreen onSuggestionClick={(prompt) => handleUserSend(prompt)} />
                 ) : (
                     <div className="max-w-4xl mx-auto pb-4">
                         {messages.map((msg, idx) => (
@@ -479,7 +519,7 @@ const Chat = () => {
                 <InputArea
                     input={input}
                     setInput={setInput}
-                    handleSend={handleSend}
+                    handleSend={handleUserSend}
                     handleStop={handleStop}
                     loading={loading}
                 />
