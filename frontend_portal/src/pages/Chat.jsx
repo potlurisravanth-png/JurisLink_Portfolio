@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Bot, Menu, Briefcase, MapPin } from 'lucide-react';
+import { Bot, Menu, Briefcase, MapPin, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { sendMessage, getUserSessions, getSession, saveSessionToAPI, deleteSessionFromAPI } from '../api';
@@ -451,6 +451,16 @@ const Chat = () => {
             {/* Header */}
             <header className="flex-none h-16 border-b border-glass-border bg-glass-highlight backdrop-blur flex items-center justify-between px-6 z-30">
                 <div className="flex items-center gap-4">
+                    {/* Back to Tools */}
+                    <button
+                        onClick={() => navigate('/')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary hover-bg rounded-lg transition-colors"
+                        title="Back to Tools"
+                    >
+                        <ArrowLeft size={16} />
+                        <span className="hidden sm:inline">Tools</span>
+                    </button>
+                    <div className="w-px h-6 bg-glass-border" />
                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 -ml-2 text-text-muted hover:text-text-primary hover-bg rounded-lg transition-colors">
                         <Menu size={20} />
                     </button>

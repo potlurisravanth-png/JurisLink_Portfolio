@@ -20,33 +20,6 @@ import LegalGPS from '../components/LegalGPS';
 
 const TOOLS = [
     {
-        id: 'document-review',
-        title: 'Document Review',
-        description: 'AI-powered contract analysis',
-        icon: FileText,
-        color: 'from-blue-500 to-cyan-500',
-        route: '/tool/document',
-        available: false
-    },
-    {
-        id: 'nda-generator',
-        title: 'NDA Generator',
-        description: 'Create privacy agreements',
-        icon: Shield,
-        color: 'from-purple-500 to-pink-500',
-        route: '/tool/nda',
-        available: false
-    },
-    {
-        id: 'tenant-notice',
-        title: 'Tenant Notice',
-        description: 'Handle landlord disputes',
-        icon: Home,
-        color: 'from-amber-500 to-orange-500',
-        route: '/tool/tenant',
-        available: false
-    },
-    {
         id: 'case-strategist',
         title: 'Case Strategist',
         description: 'Full legal analysis pipeline',
@@ -55,6 +28,33 @@ const TOOLS = [
         route: '/tool/chat',
         available: true,
         featured: true
+    },
+    {
+        id: 'document-review',
+        title: 'Document Review',
+        description: 'AI-powered contract analysis',
+        icon: FileText,
+        color: 'from-blue-500 to-cyan-500',
+        route: '/tool/document',
+        available: true
+    },
+    {
+        id: 'nda-generator',
+        title: 'NDA Generator',
+        description: 'Create privacy agreements',
+        icon: Shield,
+        color: 'from-purple-500 to-pink-500',
+        route: '/tool/nda',
+        available: true
+    },
+    {
+        id: 'tenant-notice',
+        title: 'Tenant Notice',
+        description: 'Handle landlord disputes',
+        icon: Home,
+        color: 'from-amber-500 to-orange-500',
+        route: '/tool/tenant',
+        available: true
     }
 ];
 

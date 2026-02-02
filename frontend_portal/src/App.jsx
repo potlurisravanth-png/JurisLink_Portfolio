@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import Chat from './pages/Chat';
 import LandingPage from './pages/LandingPage';
+import NDAGenerator from './pages/NDAGenerator';
+import TenantNotice from './pages/TenantNotice';
+import DocumentReview from './pages/DocumentReview';
 import LoginModal from './components/LoginModal';
 import { AnimatePresence } from 'framer-motion';
 
@@ -13,12 +16,13 @@ const AuthWrapper = () => {
   const { currentUser } = useAuth();
   const location = useLocation();
 
-  // Don't require login on landing page
-  const isLandingPage = location.pathname === '/';
+  // Don't require login on landing page or tool pages
+  const publicPaths = ['/', '/tool/nda', '/tool/tenant', '/tool/document'];
+  const isPublicPage = publicPaths.includes(location.pathname);
 
   return (
     <AnimatePresence>
-      {!currentUser && !isLandingPage && <LoginModal />}
+      {!currentUser && !isPublicPage && <LoginModal />}
     </AnimatePresence>
   );
 };
@@ -41,6 +45,9 @@ const App = () => {
               {/* Tool Routes */}
               <Route path="/tool/chat" element={<Chat />} />
               <Route path="/tool/chat/:id" element={<Chat />} />
+              <Route path="/tool/nda" element={<NDAGenerator />} />
+              <Route path="/tool/tenant" element={<TenantNotice />} />
+              <Route path="/tool/document" element={<DocumentReview />} />
 
               {/* Legacy route support */}
               <Route path="/case/:id" element={<Chat />} />
