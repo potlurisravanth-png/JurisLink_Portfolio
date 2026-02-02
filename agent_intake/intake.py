@@ -22,8 +22,14 @@ def load_instructions():
     except FileNotFoundError:
         return "You are the Intake Agent."
 
-# Initialize LLM via centralized config
-llm = AgentConfig.get_llm("intake")
+# Lazy LLM initialization to avoid import-time API key errors
+_llm = None
+
+def get_llm():
+    global _llm
+    if _llm is None:
+        _llm = AgentConfig.get_llm("intake")
+    return _llm
 
 def detect_completion_signal(messages) -> bool:
     """Check if the user has signaled completion in their last message."""
@@ -162,7 +168,7 @@ Output the JSON block with all information you have gathered so far.
         MessagesPlaceholder(variable_name="messages"),
     ])
     
-    chain = prompt | llm
+    chain = prompt | get_llm()
     response = chain.invoke({"messages": filtered_messages})
     content = response.content
     
