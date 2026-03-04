@@ -209,3 +209,25 @@ def deserialize_state(data: dict) -> CaseState:
             state[key] = default
     
     return state
+
+
+# =============================================================================
+# CA-MCP BRIDGE (Context-Aware Model Context Protocol)
+# =============================================================================
+
+def to_context_store(state: CaseState):
+    """
+    Convert a CaseState dict into a ContextStore instance.
+    Use this to transition from legacy dict access to scoped agent views.
+    """
+    from shared_lib.context_store import ContextStore
+    return ContextStore.from_case_state(dict(state))
+
+
+def from_context_store(store) -> dict:
+    """
+    Convert a ContextStore back to a CaseState-compatible dict.
+    Use this after agents have written to the store.
+    """
+    return store.to_case_state()
+

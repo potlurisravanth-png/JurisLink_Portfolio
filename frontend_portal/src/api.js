@@ -46,6 +46,111 @@ export const sendMessage = async (message, history, lastState = null, signal = n
 };
 
 /**
+ * AG-UI Protocol: Stream a message via SSE.
+ *
+ * Opens a fetch-based SSE connection to /api/chat/stream and invokes
+ * callbacks as StateSnapshot, StateDelta, and done events arrive.
+ *
+ * Uses fetch + ReadableStream instead of EventSource because EventSource
+ * only supports GET, but our endpoint requires POST with a JSON body.
+ *
+ * @param {string} message - The user's message
+ * @param {Array} history - Chat history for context
+ * @param {Object} lastState - Previous backend state for hydration
+ * @param {Object} callbacks - { onDelta, onSnapshot, onDone, onError }
+ * @param {AbortSignal} signal - Optional AbortController signal
+ */
+export const sendMessageStream = async (message, history, lastState = null, callbacks = {}, signal = null) => {
+    const { onDelta, onSnapshot, onDone, onError } = callbacks;
+    const STREAM_URL = `${API_BASE}/chat/stream`;
+
+    const body = { message, history };
+    if (lastState) {
+        body.previous_state = lastState;
+    }
+
+    try {
+        const response = await fetch(STREAM_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal,
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`SSE stream failed (${response.status}): ${errText}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            // Parse SSE events from the buffer
+            const parts = buffer.split("\n\n");
+            buffer = parts.pop(); // Keep incomplete chunk in buffer
+
+            for (const part of parts) {
+                if (!part.trim()) continue;
+
+                let eventType = "message";
+                let eventData = "";
+
+                for (const line of part.split("\n")) {
+                    if (line.startsWith("event: ")) {
+                        eventType = line.slice(7).trim();
+                    } else if (line.startsWith("data: ")) {
+                        eventData = line.slice(6);
+                    }
+                }
+
+                if (!eventData) continue;
+
+                try {
+                    const parsed = JSON.parse(eventData);
+
+                    switch (eventType) {
+                        case "StateDelta":
+                            if (onDelta) onDelta(parsed);
+                            break;
+                        case "StateSnapshot":
+                            if (onSnapshot) onSnapshot(parsed);
+                            break;
+                        case "done":
+                            if (onDone) onDone(parsed);
+                            return parsed; // Return final payload
+                        case "error":
+                            if (onError) onError(parsed);
+                            throw new Error(parsed.error || "Stream error");
+                        default:
+                            break;
+                    }
+                } catch (parseErr) {
+                    if (parseErr.message && !parseErr.message.includes("JSON")) {
+                        throw parseErr; // Re-throw non-parse errors
+                    }
+                    console.warn("SSE parse warning:", parseErr);
+                }
+            }
+        }
+    } catch (error) {
+        if (error.name === "AbortError") {
+            console.log("SSE stream cancelled by user");
+            throw new Error("CANCELLED");
+        }
+        console.error("SSE Stream Error:", error);
+        if (onError) onError({ error: error.message });
+        throw error;
+    }
+};
+
+/**
  * Request a PDF download (generates if missing).
  */
 export const downloadPDF = async (userId, caseId, facts, strategy, research) => {
