@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, User, ThumbsUp, ThumbsDown, Copy, RefreshCw, AlertTriangle, FileText, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import TypingIndicator from './TypingIndicator';
 
 const StreamedMessage = ({ content, isFinal }) => {
     const safeContent = typeof content === 'string' ? content : String(content || '');
@@ -22,7 +23,7 @@ const StreamedMessage = ({ content, isFinal }) => {
         return () => clearInterval(interval);
     }, [safeContent, isFinal]);
 
-    if (!display) return <span className="animate-pulse text-text-muted">...</span>;
+    if (!display) return <TypingIndicator />;
 
     return (
         <div className="prose dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-bg-subtle prose-pre:border prose-pre:border-glass-border prose-headings:text-text-primary prose-p:text-text-primary prose-strong:text-text-primary prose-li:text-text-primary">

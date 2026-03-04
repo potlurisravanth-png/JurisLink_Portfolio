@@ -143,3 +143,24 @@ select:focus option:checked {
     background-color: var(--color-accent-primary);
     color: white;
 }
+
+/* Skeleton Shimmer Animation (R12 Loading State Mandate) */
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+    background-size: 200% 100%;
+}
+
+/* Fade-in-up entrance */
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out forwards;
+}

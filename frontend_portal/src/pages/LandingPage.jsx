@@ -72,13 +72,33 @@ const ToolCard = ({ tool, legalContext, onStart }) => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={tool.available ? { scale: 1.02, y: -4 } : {}}
-            transition={{ duration: 0.3 }}
-            className={`relative glass rounded-2xl p-6 flex flex-col gap-4 overflow-hidden group
+            whileHover={tool.available ? { scale: 1.03, y: -6 } : {}}
+            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className={`relative rounded-2xl p-6 flex flex-col gap-4 overflow-hidden group
                   ${tool.available ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}
                   ${tool.featured ? 'ring-2 ring-accent-primary/50' : ''}`}
+            style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+            }}
             onClick={handleClick}
         >
+            {/* Inner Glow on Hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.08), transparent 70%)' }} />
+
+            {/* Gradient Border Animation */}
+            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                    background: 'linear-gradient(135deg, rgba(59,130,246,0.2), transparent 40%, transparent 60%, rgba(99,102,241,0.2))',
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'xor',
+                    WebkitMaskComposite: 'xor',
+                    padding: '1px',
+                    borderRadius: '1rem',
+                }} />
+
             {/* Featured Badge */}
             {tool.featured && (
                 <div className="absolute top-3 right-3 px-2 py-1 bg-accent-primary/20 rounded-full flex items-center gap-1">
@@ -94,11 +114,14 @@ const ToolCard = ({ tool, legalContext, onStart }) => {
                 </div>
             )}
 
-            {/* Icon */}
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${tool.color} 
-                       flex items-center justify-center shadow-lg
-                       group-hover:shadow-xl transition-shadow duration-300`}>
-                <Icon size={28} className="text-white" />
+            {/* Icon with Radial Glow */}
+            <div className="relative">
+                <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${tool.color} blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 scale-150`} />
+                <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${tool.color}
+                           flex items-center justify-center shadow-lg
+                           group-hover:shadow-xl transition-all duration-300`}>
+                    <Icon size={28} className="text-white" />
+                </div>
             </div>
 
             {/* Content */}
@@ -167,23 +190,63 @@ const LandingPage = () => {
             {/* Main Content */}
             <main className="relative z-10 px-6 py-12">
                 <div className="max-w-7xl mx-auto">
-                    {/* Hero Section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="text-center mb-12"
-                    >
-                        <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-                            Legal Intelligence.{' '}
-                            <span className="bg-gradient-to-r from-accent-primary to-cyan-400 bg-clip-text text-transparent">
-                                Zero Data Retention.
-                            </span>
-                        </h2>
-                        <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+                    {/* Hero Section with Animated Gradient Orb */}
+                    <div className="relative text-center mb-12">
+                        {/* Animated Gradient Orb */}
+                        <motion.div
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] pointer-events-none -z-10"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                        >
+                            <div className="w-full h-full rounded-full opacity-20 blur-[80px]"
+                                style={{ background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6)' }} />
+                        </motion.div>
+
+                        {/* Staggered Hero Text */}
+                        <motion.h2
+                            className="text-4xl md:text-5xl font-bold text-text-primary mb-4"
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                                hidden: {},
+                                visible: { transition: { staggerChildren: 0.08 } },
+                            }}
+                        >
+                            {'Legal Intelligence. '.split('').map((char, i) => (
+                                <motion.span
+                                    key={`l-${i}`}
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+                                    }}
+                                >
+                                    {char === ' ' ? '\u00A0' : char}
+                                </motion.span>
+                            ))}
+                            <br className="hidden md:inline" />
+                            {'Zero Data Retention.'.split('').map((char, i) => (
+                                <motion.span
+                                    key={`z-${i}`}
+                                    className="bg-gradient-to-r from-accent-primary to-cyan-400 bg-clip-text text-transparent"
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+                                    }}
+                                >
+                                    {char === ' ' ? '\u00A0' : char}
+                                </motion.span>
+                            ))}
+                        </motion.h2>
+
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.8 }}
+                            className="text-lg text-text-secondary max-w-2xl mx-auto"
+                        >
                             Privacy-first legal utilities powered by AI. Your data stays yours.
-                        </p>
-                    </motion.div>
+                        </motion.p>
+                    </div>
 
                     {/* Legal GPS */}
                     <div className="max-w-4xl mx-auto mb-16">

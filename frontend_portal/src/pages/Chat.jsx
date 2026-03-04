@@ -13,6 +13,7 @@ import MessageBubble from '../components/chat/MessageBubble';
 import InputArea from '../components/chat/InputArea';
 import WelcomeScreen from '../components/chat/WelcomeScreen';
 import ProfileMenu from '../components/ProfileMenu';
+import PreferencesModal from '../components/ui/PreferencesModal';
 
 // Helpers
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -445,6 +446,7 @@ const Chat = () => {
                     title={sessions.find(s => s.id === (currentSessionId || caseId))?.title}
                     lastUpdated={lastUpdated}
                     currentUser={currentUser}
+                    isLoading={loading}
                 />
             }
         >
@@ -538,35 +540,13 @@ const Chat = () => {
                 </p>
             </div>
 
-            {/* Preferences Modal */}
-            {isSettingsOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}>
-                    <div className="bg-bg-surface border border-glass-border rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-lg font-bold text-text-primary mb-4">Preferences</h2>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-text-secondary">Theme</span>
-                                <select
-                                    value={theme}
-                                    onChange={(e) => setTheme(e.target.value)}
-                                    className="bg-bg-subtle border border-glass-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none focus:ring-2 focus:ring-accent-primary cursor-pointer appearance-none pr-8"
-                                    style={{
-                                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                                        backgroundPosition: 'right 0.5rem center',
-                                        backgroundRepeat: 'no-repeat',
-                                        backgroundSize: '1.5em 1.5em'
-                                    }}
-                                >
-                                    <option value="system" className="bg-bg-surface text-text-primary">System Default</option>
-                                    <option value="dark" className="bg-bg-surface text-text-primary">Dark Mode</option>
-                                    <option value="light" className="bg-bg-surface text-text-primary">Light Mode</option>
-                                    <option value="high-contrast" className="bg-bg-surface text-text-primary">High Contrast</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Preferences Modal (P7: Framer Motion entrance) */}
+            <PreferencesModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                currentTheme={theme}
+                onThemeChange={setTheme}
+            />
         </AppShell>
     );
 };
