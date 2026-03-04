@@ -67,3 +67,24 @@ def build_sse_stream(events: list) -> str:
         Full SSE stream string.
     """
     return "".join(format_sse_event(etype, data) for etype, data in events)
+
+
+def format_heartbeat() -> str:
+    """
+    Generate an SSE heartbeat event to prevent proxy timeouts.
+
+    Per realtime-streaming skill R6: heartbeat every 15 seconds
+    prevents proxy/CDN connection drops and detects stale clients.
+
+    Returns:
+        A formatted SSE heartbeat event string.
+    """
+    from datetime import datetime, timezone
+    return format_sse_event("heartbeat", {
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+
+
+# Heartbeat interval in seconds (per realtime-streaming skill R6)
+HEARTBEAT_INTERVAL_SECONDS = 15
+

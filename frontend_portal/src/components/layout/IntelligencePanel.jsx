@@ -3,37 +3,7 @@ import { Briefcase, Download, FileText, Activity } from 'lucide-react';
 import Button from '../ui/Button';
 import { downloadPDF } from '../../api';
 
-/**
- * Skeleton Shimmer Block - R12 Loading State Mandate.
- * Shows animated gradient shimmer during async data loading.
- */
-const SkeletonBlock = ({ width = 'w-full', height = 'h-4', className = '' }) => (
-    <div className={`${width} ${height} rounded-lg overflow-hidden ${className}`}>
-        <div className="w-full h-full bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-shimmer"
-            style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />
-    </div>
-);
-
-const SkeletonFactsPanel = () => (
-    <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-            <div key={i} className="glass p-3 rounded-xl">
-                <SkeletonBlock width="w-24" height="h-2.5" className="mb-2" />
-                <SkeletonBlock width="w-full" height="h-3.5" />
-            </div>
-        ))}
-    </div>
-);
-
-const SkeletonStrategyPanel = () => (
-    <div className="glass p-4 rounded-xl border-l-2 border-accent-primary/30 bg-accent-primary/5">
-        <SkeletonBlock width="w-full" height="h-3" className="mb-2" />
-        <SkeletonBlock width="w-3/4" height="h-3" className="mb-2" />
-        <SkeletonBlock width="w-5/6" height="h-3" />
-    </div>
-);
-
-const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, currentUser, isLoading = false }) => {
+const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, currentUser }) => {
     const [downloadStatus, setDownloadStatus] = useState('idle');
 
     const handleDownloadPDF = async () => {
@@ -66,7 +36,6 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
     };
 
     const getCaseStatus = () => {
-        if (isLoading) return { label: 'Analyzing...', color: 'text-cyan-400 animate-pulse', bg: 'bg-cyan-500/10' };
         if (!facts || Object.keys(facts).length === 0) return { label: 'New Case', color: 'text-text-muted', bg: 'bg-white/5' };
         if (facts.status === 'COMPLETE') return { label: 'Analysis Complete', color: 'text-green-400', bg: 'bg-green-500/10' };
         const factCount = Object.keys(facts).filter(k => k !== 'status' && facts[k]).length;
@@ -110,9 +79,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
                         <h3 className="text-xs font-bold uppercase tracking-wider">Key Facts</h3>
                     </div>
 
-                    {isLoading ? (
-                        <SkeletonFactsPanel />
-                    ) : Object.keys(facts).length > 0 ? (
+                    {Object.keys(facts).length > 0 ? (
                         <div className="space-y-2">
                             {Object.entries(facts).filter(([k]) => k !== 'status').map(([key, value]) => (
                                 <div key={key} className="glass p-3 rounded-xl transition-all hover-bg">
@@ -129,16 +96,8 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
                     )}
                 </section>
 
-                {/* Strategy (if available or loading) */}
-                {isLoading && !strategy ? (
-                    <section>
-                        <div className="flex items-center gap-2 mb-3 px-1 text-text-muted">
-                            <Activity size={14} />
-                            <h3 className="text-xs font-bold uppercase tracking-wider">Strategic Brief</h3>
-                        </div>
-                        <SkeletonStrategyPanel />
-                    </section>
-                ) : strategy && (
+                {/* Strategy (if available) */}
+                {strategy && (
                     <section>
                         <div className="flex items-center gap-2 mb-3 px-1 text-text-muted">
                             <Activity size={14} />
