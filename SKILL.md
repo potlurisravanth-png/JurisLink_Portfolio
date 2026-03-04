@@ -35,7 +35,7 @@ Available Modes (Type /mode [name]):
 Global Macros (Type /[command]):
  - /status   : Read STATUS.md and print a quick summary
  - /audit    : Deep QA scan against UI standards
- - /close    : Run TEMP cleanup, update CHANGELOG, auto-sync Git.
+ - /close    : Log session notes to CHANGELOG/SPRINT_LOG, execute `/cleanup` routine, update CHANGELOG, auto-sync Git.
  - /git      : Manual override. Step-by-step interactive staging and pushing.
  - /rule     : Validate and append a new user rule to Section 4.
 
@@ -49,7 +49,8 @@ Awaiting your command...
 > **[R0] CONTINUOUS LEARNING MANDATE:** Before writing code, you MUST autonomously read `STATUS.md`, `CHANGELOG.md`, `D:\Automated\Project_Engine\QA_Inspector\reports\jurislink_portfolio\latest_report.md`, and frontend components. Learn from past mistakes, open QA findings, and the actual codebase state. Do not wait for manual instructions. 
 
 **Session Close (`close` / `sync`)**
-- Append today's work to `CHANGELOG.md`.
+- Execute `/cleanup` routine.
+- Summarize session learnings and append today's work to `CHANGELOG.md` and `SPRINT_LOG.md` (if applicable).
 - Read PMO `SPRINT_LOG.md`. Auto-commit (do not push) if half-done; auto-commit and `git push` if done.
 
 ---

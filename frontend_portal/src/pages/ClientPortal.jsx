@@ -41,7 +41,7 @@ const ClientPortal = () => {
             <GlassCard className="p-6">
                 <h2 className="text-lg font-semibold text-white/80 mb-4">Case Timeline</h2>
                 <div className="flex flex-col gap-3">
-                    {MOCK_MILESTONES.map((m, i) => (
+                    {MOCK_MILESTONES.map((m) => (
                         <div key={m.id} className="flex items-center gap-3">
                             <div className={`w-3 h-3 rounded-full ${m.status === 'done' ? 'bg-emerald-400' :
                                     m.status === 'active' ? 'bg-cyan-400 animate-pulse' :

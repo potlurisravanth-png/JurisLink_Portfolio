@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, User, ThumbsUp, ThumbsDown, Copy, RefreshCw, AlertTriangle, FileText, Download } from 'lucide-react';
+ 
 import { motion } from 'framer-motion';
 import TypingIndicator from './TypingIndicator';
 

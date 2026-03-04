@@ -1,4 +1,5 @@
 import React from 'react';
+ 
 import { motion } from 'framer-motion';
 import { Bot, FileText, LayoutGrid, Briefcase, ArrowRight } from 'lucide-react';
 
