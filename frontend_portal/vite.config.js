@@ -57,4 +57,10 @@ export default defineConfig({
   preview: {
     port: 4173,
   },
+
+  // === TESTING ===
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
 })
