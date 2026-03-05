@@ -198,7 +198,7 @@ const LoginModal = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading !== null}
-                                    className="w-full bg-accent-primary hover:bg-accent-primary/90 text-white font-medium py-3.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full btn-champagne font-medium py-3.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading === 'email' ? (
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />

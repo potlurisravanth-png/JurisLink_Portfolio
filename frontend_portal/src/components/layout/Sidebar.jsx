@@ -66,7 +66,7 @@ const Sidebar = ({
             <div className="p-4 space-y-4">
                 <Button
                     variant="primary"
-                    className="w-full justify-start pl-4 py-3 shadow-blue-900/20"
+                    className="w-full justify-start pl-4 py-3"
                     onClick={onNewChat}
                     icon={Plus}
                 >

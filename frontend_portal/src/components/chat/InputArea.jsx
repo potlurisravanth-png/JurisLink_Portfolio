@@ -236,9 +236,9 @@ const InputArea = ({ input, setInput, handleSend, handleStop, loading }) => {
                             disabled={!input.trim()}
                             onClick={() => handleSend()}
                             className={`
-                                rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300
+                                 rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300
                                 ${input.trim()
-                                    ? 'bg-accent-primary hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25 rotate-0 scale-100'
+                                    ? 'bg-accent-primary hover:brightness-110 text-bg-app shadow-lg shadow-accent-glow rotate-0 scale-100'
                                     : 'bg-bg-subtle text-text-muted cursor-not-allowed opacity-60 rotate-90 scale-90'}
                             `}
                         >

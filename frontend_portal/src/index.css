@@ -2,52 +2,66 @@
 @config "../tailwind.config.js";
 @plugin "@tailwindcss/typography";
 
-/* Semantic Tokens */
+/* ================================================================
+   MIDNIGHT LUXE — Design Token System
+   Preset B: "A private members' club meets a high-end watchmaker's atelier"
+   ================================================================ */
+
+/* Dark Mode (Default) */
 :root,
 :root.dark {
-    /* Default (Dark "Glass & Steel") */
-    --color-bg-app: #020617;
-    --color-bg-surface: #0f172a;
-    --color-bg-subtle: #1e293b;
+    --color-bg-app: #0A0A12;
+    --color-bg-surface: #12121C;
+    --color-bg-subtle: #1A1A28;
 
-    --color-glass-panel: rgba(15, 23, 42, 0.7);
-    --color-glass-border: rgba(255, 255, 255, 0.08);
-    --color-glass-highlight: rgba(255, 255, 255, 0.03);
+    --color-glass-panel: rgba(18, 18, 28, 0.75);
+    --color-glass-border: rgba(201, 168, 76, 0.08);
+    --color-glass-highlight: rgba(201, 168, 76, 0.03);
 
-    --color-accent-primary: #3b82f6;
-    --color-accent-glow: rgba(59, 130, 246, 0.5);
+    --color-accent-primary: #C9A84C;
+    --color-accent-glow: rgba(201, 168, 76, 0.4);
 
-    --color-text-primary: #f8fafc;
-    --color-text-secondary: #94a3b8;
-    --color-text-muted: #64748b;
+    --color-text-primary: #FAF8F5;
+    --color-text-secondary: #9A9AAE;
+    --color-text-muted: #5A5A72;
 
-    /* Theme-aware hover/interactive states */
-    --color-hover-bg: rgba(255, 255, 255, 0.05);
-    --color-footer-bg: rgba(0, 0, 0, 0.1);
+    --color-hover-bg: rgba(201, 168, 76, 0.06);
+    --color-footer-bg: rgba(0, 0, 0, 0.2);
+
+    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.25);
+    --shadow-card-hover: 0 8px 40px rgba(201, 168, 76, 0.12);
+    --shadow-floating: 0 12px 48px rgba(0, 0, 0, 0.4);
+    --shadow-glow-accent: 0 0 40px rgba(201, 168, 76, 0.15);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.15);
 
     color-scheme: dark;
 }
 
 /* Light Mode */
 :root.light {
-    --color-bg-app: #f1f5f9;
-    --color-bg-surface: #ffffff;
-    --color-bg-subtle: #e2e8f0;
+    --color-bg-app: #FAF8F5;
+    --color-bg-surface: #FFFFFF;
+    --color-bg-subtle: #F0EDE6;
 
     --color-glass-panel: rgba(255, 255, 255, 0.85);
-    --color-glass-border: rgba(0, 0, 0, 0.1);
-    --color-glass-highlight: rgba(0, 0, 0, 0.02);
+    --color-glass-border: rgba(201, 168, 76, 0.15);
+    --color-glass-highlight: rgba(201, 168, 76, 0.04);
 
-    --color-accent-primary: #2563eb;
-    --color-accent-glow: rgba(37, 99, 235, 0.3);
+    --color-accent-primary: #B8942F;
+    --color-accent-glow: rgba(184, 148, 47, 0.25);
 
-    --color-text-primary: #0f172a;
-    --color-text-secondary: #475569;
-    --color-text-muted: #64748b;
+    --color-text-primary: #1A1A28;
+    --color-text-secondary: #5A5A72;
+    --color-text-muted: #8A8A9E;
 
-    /* Theme-aware hover/interactive states */
-    --color-hover-bg: rgba(0, 0, 0, 0.05);
-    --color-footer-bg: rgba(0, 0, 0, 0.03);
+    --color-hover-bg: rgba(201, 168, 76, 0.06);
+    --color-footer-bg: rgba(0, 0, 0, 0.02);
+
+    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-card-hover: 0 8px 40px rgba(201, 168, 76, 0.1);
+    --shadow-floating: 0 12px 48px rgba(0, 0, 0, 0.12);
+    --shadow-glow-accent: 0 0 40px rgba(201, 168, 76, 0.12);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 
     color-scheme: light;
 }
@@ -59,25 +73,41 @@
     --color-bg-subtle: #1a1a1a;
 
     --color-glass-panel: #000000;
-    --color-glass-border: #ffffff;
+    --color-glass-border: #C9A84C;
     --color-glass-highlight: transparent;
 
-    --color-accent-primary: #ffff00;
+    --color-accent-primary: #FFD700;
     --color-accent-glow: transparent;
 
     --color-text-primary: #ffffff;
     --color-text-secondary: #ffffff;
     --color-text-muted: #dddddd;
 
-    --color-hover-bg: rgba(255, 255, 255, 0.1);
-    --color-footer-bg: rgba(255, 255, 255, 0.05);
+    --color-hover-bg: rgba(255, 215, 0, 0.1);
+    --color-footer-bg: rgba(255, 215, 0, 0.05);
+
+    --shadow-card: none;
+    --shadow-card-hover: none;
+    --shadow-floating: none;
+    --shadow-glow-accent: none;
+    --shadow-inset: none;
 
     color-scheme: dark;
 }
 
-/* Global element styling */
+/* ================================================================
+   GLOBAL RESETS & TYPOGRAPHY
+   ================================================================ */
+
 * {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+html {
+    @apply bg-bg-app text-text-primary antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 #root {
@@ -88,67 +118,19 @@
     isolation: isolate;
 }
 
-html {
-    @apply bg-bg-app text-text-primary antialiased;
-    margin: 0;
-    padding: 0;
-}
-
 body {
-    @apply overflow-hidden selection:bg-accent-primary/30 selection:text-white;
+    @apply overflow-hidden;
     margin: 0;
     padding: 0;
 }
 
-/* Utilities */
-.scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: var(--color-hover-bg);
-    border-radius: 9999px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-text-muted);
-}
-
-.glass {
-    @apply bg-glass-panel backdrop-blur-xl border border-glass-border;
-}
-
-/* Theme-aware hover background utility */
-.hover-bg:hover {
-    background-color: var(--color-hover-bg);
-}
-
-.footer-bg {
-    background-color: var(--color-footer-bg);
-}
-
-/* Select dropdown styling for cross-browser compatibility */
-select option {
-    background-color: var(--color-bg-surface);
-    color: var(--color-text-primary);
-    padding: 8px;
-}
-
-select:focus option:checked {
-    background-color: var(--color-accent-primary);
+body::selection,
+body *::selection {
+    background: rgba(201, 168, 76, 0.3);
     color: white;
 }
 
-/* ================================================================
-   CINEMATIC DESIGN SYSTEM (frontend-specialist v4.0)
-   ================================================================ */
-
-/* [R1] SVG Noise Texture Overlay — Subtle film grain */
+/* [R1] SVG Noise Texture Overlay */
 body::before {
     content: '';
     position: fixed;
@@ -159,16 +141,59 @@ body::before {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
-/* Shadow Token System */
-:root {
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
-    --shadow-card-hover: 0 8px 40px rgba(0, 0, 0, 0.14);
-    --shadow-floating: 0 12px 48px rgba(0, 0, 0, 0.18);
-    --shadow-glow-accent: 0 0 40px rgba(59, 130, 246, 0.2);
-    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+/* Drama Typography */
+.font-drama {
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 1.0;
 }
 
-/* [R2] Magnetic Button Hover Effect */
+code,
+pre,
+.font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ================================================================
+   SCROLLBAR
+   ================================================================ */
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(201, 168, 76, 0.15);
+    border-radius: 9999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(201, 168, 76, 0.3);
+}
+
+/* ================================================================
+   UTILITY CLASSES
+   ================================================================ */
+
+.glass {
+    @apply bg-glass-panel backdrop-blur-xl border border-glass-border;
+}
+
+.hover-bg:hover {
+    background-color: var(--color-hover-bg);
+}
+
+.footer-bg {
+    background-color: var(--color-footer-bg);
+}
+
+/* [R2] Magnetic Button */
 .btn-magnetic {
     position: relative;
     overflow: hidden;
@@ -183,18 +208,6 @@ body::before {
 .btn-magnetic:hover {
     transform: scale(1.03);
     box-shadow: var(--shadow-card-hover);
-}
-
-.btn-magnetic .btn-bg {
-    position: absolute;
-    inset: 0;
-    transform: translateY(100%);
-    transition: transform 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    border-radius: inherit;
-}
-
-.btn-magnetic:hover .btn-bg {
-    transform: translateY(0);
 }
 
 /* Card Hover Elevation */
@@ -218,26 +231,44 @@ body::before {
     transform: translateY(-1px);
 }
 
-/* Premium Typography Defaults */
-html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
-code,
-pre,
-.font-mono {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-/* Accent Glow Effect */
+/* Accent Glow */
 .glow-accent {
     box-shadow: var(--shadow-glow-accent);
 }
 
-/* Gradient Text Utility */
+/* Gradient Text — Champagne */
 .text-gradient {
-    background: linear-gradient(135deg, var(--color-accent-primary), #06b6d4);
+    background: linear-gradient(135deg, #C9A84C, #E8D48B);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+/* Champagne Button Gradient */
+.btn-champagne {
+    background: linear-gradient(135deg, #C9A84C, #B8942F);
+    color: #0A0A12;
+    font-weight: 600;
+    border: none;
+    transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        box-shadow 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        filter 300ms ease;
+}
+
+.btn-champagne:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 40px rgba(201, 168, 76, 0.25);
+    filter: brightness(1.1);
+}
+
+/* Select dropdown styling */
+select option {
+    background-color: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    padding: 8px;
+}
+
+select:focus option:checked {
+    background-color: var(--color-accent-primary);
+    color: #0A0A12;
 }
