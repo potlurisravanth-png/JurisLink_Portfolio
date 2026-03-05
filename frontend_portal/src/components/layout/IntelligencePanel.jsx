@@ -82,7 +82,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
                     {Object.keys(facts).length > 0 ? (
                         <div className="space-y-2">
                             {Object.entries(facts).filter(([k]) => k !== 'status').map(([key, value]) => (
-                                <div key={key} className="glass p-3 rounded-xl transition-all hover-bg" data-agent-field={key} data-value={String(value)}>
+                                <div key={key} className="glass p-3 rounded-xl transition-all card-hover" data-agent-field={key} data-value={String(value)}>
                                     <span className="block text-[10px] font-bold text-text-muted uppercase mb-1">{formatFactKey(key)}</span>
                                     <p className="text-sm text-text-primary leading-relaxed">{String(value)}</p>
                                 </div>

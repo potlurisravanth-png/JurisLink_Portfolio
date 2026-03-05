@@ -28,7 +28,7 @@ const WelcomeScreen = ({ onSuggestionClick }) => {
                     <button
                         key={i}
                         onClick={() => onSuggestionClick(s.prompt)}
-                        className="group relative p-6 rounded-2xl border border-glass-border bg-glass-panel hover:bg-white/5 hover:border-accent-primary/30 transition-all duration-300 text-left hover:-translate-y-1 hover:shadow-xl"
+                        className="group relative p-6 rounded-[2rem] border border-glass-border bg-glass-panel hover:bg-white/5 hover:border-accent-primary/30 transition-all duration-300 text-left card-hover"
                     >
                         <div className="mb-4 p-3 rounded-xl w-fit bg-bg-surface border border-white/5 text-accent-primary group-hover:scale-110 transition-transform">
                             <s.icon size={24} />

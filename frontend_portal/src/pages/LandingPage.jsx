@@ -75,9 +75,9 @@ const ToolCard = ({ tool, legalContext, onStart }) => {
             animate={{ opacity: 1, y: 0 }}
             whileHover={tool.available ? { scale: 1.02, y: -4 } : {}}
             transition={{ duration: 0.3 }}
-            className={`relative glass rounded-2xl p-6 flex flex-col gap-4 overflow-hidden group
+            className={`relative glass rounded-[2rem] p-6 flex flex-col gap-4 overflow-hidden group card-hover
                   ${tool.available ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}
-                  ${tool.featured ? 'ring-2 ring-accent-primary/50' : ''}`}
+                  ${tool.featured ? 'ring-2 ring-accent-primary/50 glow-accent' : ''}`}
             onClick={handleClick}
         >
             {/* Featured Badge */}
@@ -177,7 +177,7 @@ const LandingPage = () => {
                     >
                         <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
                             Legal Intelligence.{' '}
-                            <span className="bg-gradient-to-r from-accent-primary to-cyan-400 bg-clip-text text-transparent">
+                            <span className="text-gradient">
                                 Zero Data Retention.
                             </span>
                         </h2>
@@ -219,7 +219,7 @@ const LandingPage = () => {
             {/* Footer */}
             <footer className="relative z-10 px-6 py-8 mt-12 border-t border-glass-border">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-text-muted text-sm">
+                    <div className="flex items-center gap-2 text-text-muted text-sm link-hover">
                         <Lock size={14} className="text-amber-400" />
                         <span>Privacy Protocol: All data incinerated after 60 minutes</span>
                     </div>
