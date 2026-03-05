@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
- 
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Scale, Shield } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';

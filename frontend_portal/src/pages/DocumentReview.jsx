@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
- 
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { FileText, ArrowLeft, Upload, Loader2, AlertTriangle, CheckCircle, XCircle, MapPin } from 'lucide-react';
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, User, ThumbsUp, ThumbsDown, Copy, RefreshCw, AlertTriangle, FileText, Download } from 'lucide-react';
- 
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const StreamedMessage = ({ content, isFinal }) => {

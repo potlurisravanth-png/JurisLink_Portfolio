@@ -4,11 +4,19 @@ Tests memory hydration and state echo functionality.
 """
 import requests
 import json
+import pytest
 from colorama import init, Fore, Style
 
 init()
 
 API_URL = "http://localhost:7071/api/chat"
+
+def check_endpoint():
+    try:
+        requests.get("http://localhost:7071", timeout=1)
+        return True
+    except requests.exceptions.ConnectionError:
+        return False
 
 def print_header(text):
     print(f"\n{Fore.CYAN}{'='*60}{Style.RESET_ALL}")
@@ -21,6 +29,7 @@ def print_result(success, message):
     else:
         print(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
 
+@pytest.mark.skipif(not check_endpoint(), reason="Requires local Azure Functions emulator on port 7071")
 def test_state_persistence():
     """Test that state is properly hydrated across turns."""
     print_header("STATE PERSISTENCE TEST")
