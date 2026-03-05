@@ -68,6 +68,8 @@ const MessageBubble = ({ role, content, isFinal = true, isError = false, docUrl 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={`group flex gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-8`}
+            data-agent-schema="ChatResponse"
+            data-agent-field={isUser ? 'user_message' : 'response'}
         >
             {/* Avatar */}
             <div className={`

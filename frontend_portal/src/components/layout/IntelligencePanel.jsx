@@ -73,7 +73,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
             {/* Content Scroller */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
                 {/* Extracted Facts */}
-                <section>
+                <section data-agent-schema="CaseFacts">
                     <div className="flex items-center gap-2 mb-3 px-1 text-text-muted">
                         <FileText size={14} />
                         <h3 className="text-xs font-bold uppercase tracking-wider">Key Facts</h3>
@@ -82,7 +82,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
                     {Object.keys(facts).length > 0 ? (
                         <div className="space-y-2">
                             {Object.entries(facts).filter(([k]) => k !== 'status').map(([key, value]) => (
-                                <div key={key} className="glass p-3 rounded-xl transition-all hover-bg">
+                                <div key={key} className="glass p-3 rounded-xl transition-all hover-bg" data-agent-field={key} data-value={String(value)}>
                                     <span className="block text-[10px] font-bold text-text-muted uppercase mb-1">{formatFactKey(key)}</span>
                                     <p className="text-sm text-text-primary leading-relaxed">{String(value)}</p>
                                 </div>
@@ -98,7 +98,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
 
                 {/* Strategy (if available) */}
                 {strategy && (
-                    <section>
+                    <section data-agent-schema="ChatResponse" data-agent-field="strategy" data-value={strategy}>
                         <div className="flex items-center gap-2 mb-3 px-1 text-text-muted">
                             <Activity size={14} />
                             <h3 className="text-xs font-bold uppercase tracking-wider">Strategic Brief</h3>
