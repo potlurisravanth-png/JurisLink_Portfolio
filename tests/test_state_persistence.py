@@ -2,30 +2,21 @@
 JURISLINK V2 - STATE PERSISTENCE TEST
 Tests memory hydration and state echo functionality.
 """
+import requests
 import json
 import pytest
-from unittest.mock import Mock
 from colorama import init, Fore, Style
-import azure.functions as func
-
-# Import the actual endpoint from the application
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from function_app import chat_endpoint
 
 init()
 
-def invoke_endpoint(payload: dict) -> dict:
-    """Helper to simulate an HTTP POST request to the Azure Function endpoint."""
-    req = func.HttpRequest(
-        method='POST',
-        url='/api/chat',
-        body=json.dumps(payload).encode('utf-8')
-    )
-    # The real function uses req.get_json(), which will automatically parse the body we passed
-    response: func.HttpResponse = chat_endpoint(req)
-    return json.loads(response.get_body().decode('utf-8'))
+API_URL = "http://localhost:7071/api/chat"
+
+def check_endpoint():
+    try:
+        requests.get("http://localhost:7071", timeout=1)
+        return True
+    except requests.exceptions.ConnectionError:
+        return False
 
 def print_header(text):
     print(f"\n{Fore.CYAN}{'='*60}{Style.RESET_ALL}")
@@ -38,6 +29,7 @@ def print_result(success, message):
     else:
         print(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
 
+@pytest.mark.skipif(not check_endpoint(), reason="Requires local Azure Functions emulator on port 7071")
 def test_state_persistence():
     """Test that state is properly hydrated across turns."""
     print_header("STATE PERSISTENCE TEST")
@@ -48,11 +40,11 @@ def test_state_persistence():
     # === TURN 1: Initial message (no previous_state) ===
     print(f"{Fore.YELLOW}[Turn 1] Sending initial message...{Style.RESET_ALL}")
     
-    response1 = invoke_endpoint({
+    response1 = requests.post(API_URL, json={
         "message": "I was wrongfully terminated from my job in California.",
         "history": [],
         "language": "en"
-    })
+    }, timeout=60).json()
     
     # Test: Response received
     total_tests += 1
@@ -84,7 +76,7 @@ def test_state_persistence():
     # === TURN 2: Continue with previous_state ===
     print(f"\n{Fore.YELLOW}[Turn 2] Sending with previous_state...{Style.RESET_ALL}")
     
-    response2 = invoke_endpoint({
+    response2 = requests.post(API_URL, json={
         "message": "My name is John Doe. I worked there for 5 years.",
         "history": [
             {"role": "user", "content": "I was wrongfully terminated from my job in California."},
@@ -92,7 +84,7 @@ def test_state_persistence():
         ],
         "language": "en",
         "previous_state": final_state_1  # HYDRATE
-    })
+    }, timeout=60).json()
     
     # Test: Response received
     total_tests += 1
@@ -124,7 +116,7 @@ def test_state_persistence():
     # === TURN 3: Trigger completion ===
     print(f"\n{Fore.YELLOW}[Turn 3] Triggering full chain with completion signal...{Style.RESET_ALL}")
     
-    response3 = invoke_endpoint({
+    response3 = requests.post(API_URL, json={
         "message": "To summarize: I'm John Doe, I worked at TechCorp in California for 5 years. I was terminated after complaining about safety violations. I have documentation of my complaints and my termination letter. That is everything. I'm done.",
         "history": [
             {"role": "user", "content": "I was wrongfully terminated from my job in California."},
@@ -134,7 +126,7 @@ def test_state_persistence():
         ],
         "language": "en",
         "previous_state": final_state_2
-    })
+    }, timeout=120).json()
     
     # Test: iteration count = 3
     total_tests += 1
