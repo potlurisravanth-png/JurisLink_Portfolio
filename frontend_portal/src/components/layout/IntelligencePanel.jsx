@@ -114,7 +114,7 @@ const IntelligencePanel = ({ facts, strategy, caseId, title, lastUpdated, curren
             <div className="p-4 border-t border-glass-border footer-bg">
                 <Button
                     variant="primary"
-                    className="w-full btn-champagne rounded-xl py-2.5 text-sm"
+                    className="w-full btn-primary rounded-xl py-2.5 text-sm"
                     onClick={handleDownloadPDF}
                     disabled={!caseId || caseId === 'new' || downloadStatus === 'generating' || !facts || Object.keys(facts).length === 0}
                     icon={Download}

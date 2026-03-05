@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 const AppShell = ({ sidebar, analysisPanel, children, isSidebarOpen, isAnalysisOpen }) => {
     return (
         <div className="flex h-screen w-screen bg-bg-app overflow-hidden">
-            {/* Background Decorator */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-accent-primary/10 rounded-full blur-[100px]" />
-                <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[80px]" />
+            {/* Animated Background */}
+            <div className="fixed inset-0 pointer-events-none z-0 bg-legal-grid">
+                <div className="bg-orb bg-orb-1"></div>
+                <div className="bg-orb bg-orb-2"></div>
             </div>
 
             {/* Left Sidebar - Collapsible on Mobile */}

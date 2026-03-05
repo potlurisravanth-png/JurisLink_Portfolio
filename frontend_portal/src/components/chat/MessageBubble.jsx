@@ -74,7 +74,7 @@ const MessageBubble = ({ role, content, isFinal = true, isError = false, docUrl 
             <div className={`
                 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border
                 ${isUser
-                    ? 'bg-accent-primary text-bg-app border-accent-primary/50'
+                    ? 'bg-accent-primary text-white border-accent-primary/50'
                     : 'bg-glass-panel text-accent-primary border-glass-border'
                 }
             `}>
@@ -86,7 +86,7 @@ const MessageBubble = ({ role, content, isFinal = true, isError = false, docUrl 
                 <div className={`
                     p-5 rounded-[1.5rem]
                     ${isUser
-                        ? 'bg-accent-primary/15 border border-accent-primary/25 text-text-primary rounded-tr-md'
+                        ? 'bg-accent-primary/10 border border-accent-primary/20 text-text-primary rounded-tr-md'
                         : 'bg-glass-panel border border-glass-border text-text-primary rounded-tl-md'
                     }
                 `}>
